@@ -24,8 +24,6 @@ def load_model(model_name="yolov8n-seg.pt", device=None):
         RuntimeError: If the model cannot be loaded.
     
     Example:
-        >>> model = load_model()
-        >>> model = load_model(model_name="custom_model.pt", device="cuda")
     """
     try:
         # Initialize the YOLO model with the specified name or path
