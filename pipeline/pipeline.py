@@ -1,19 +1,23 @@
 from loader.model_loader import CellposeSegmenter
 from importer.importer import find_images
 from exporter.exporter import save_mask_as_npy, save_mask_as_png, export_yolo_annotations, draw_overlay
+from loader.model_loader import SegmenterFactory
 import os
 
-
-def run_segmentation(input_dir, output_dir, model_type="cyto", export_formats=("overlay", "npy", "png", "yolo")):
+def run_segmentation(
+    segmenter,
+    input_dir,
+    output_dir,
+    export_formats=("overlay", "npy", "png", "yolo")
+):
     """
-    Run full segmentation pipeline on a folder of images.
+    Run full segmentation pipeline using a given segmenter on a folder of images.
 
-    :param input_dir: Root directory of input images
-    :param output_dir: Root directory to save results
-    :param model_type: Cellpose model to use
+    :param segmenter: An instance of a segmenter (must have .load_image() and .segment())
+    :param input_dir: Directory of input images
+    :param output_dir: Directory to save results
     :param export_formats: Tuple of formats to export: overlay, npy, png, yolo
     """
-    segmenter = CellposeSegmenter(model_type=model_type, use_gpu=True)
     image_paths = find_images(input_dir)
 
     for image_path in image_paths:
@@ -21,7 +25,6 @@ def run_segmentation(input_dir, output_dir, model_type="cyto", export_formats=("
             image = segmenter.load_image(image_path)
             masks = segmenter.segment(image)
 
-            # base path relative to input_dir, without extension
             relative_base = os.path.splitext(os.path.relpath(image_path, input_dir))[0]
 
             if "overlay" in export_formats:
