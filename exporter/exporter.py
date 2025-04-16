@@ -1,6 +1,7 @@
 import numpy as np
 from PIL import Image
 import os
+import cv2
 from typing import Tuple
 import matplotlib.pyplot as plt
 from skimage.segmentation import find_boundaries
@@ -80,14 +81,23 @@ def export_yolo_annotations(mask: np.ndarray, output_txt_path: str, image_size: 
 
 def draw_overlay(image: np.ndarray, mask: np.ndarray, output_path: str):
     """
-    Draw mask boundaries on top of the image and save as overlay.
+    Draw boundaries on top of the image and save as an overlay PNG.
 
-    :param image: Original image as numpy array (RGB)
-    :param mask: Segmentation mask as labeled regions
-    :param output_path: Path to save result
+    :param image: Original image (grayscale or RGB) as numpy array
+    :param mask: Segmentation mask (labels)
+    :param output_path: Path to save overlay result
     """
     boundaries = find_boundaries(mask, mode='outer')
-    overlaid = image.copy()
+
+    # Handle grayscale → RGB conversion
+    if len(image.shape) == 2:
+        overlaid = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+    elif image.shape[2] == 1:
+        overlaid = cv2.cvtColor(image[:, :, 0], cv2.COLOR_GRAY2RGB)
+    else:
+        overlaid = image.copy()
+
+    # Apply red boundaries
     overlaid[boundaries] = [255, 0, 0]
 
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
@@ -96,4 +106,4 @@ def draw_overlay(image: np.ndarray, mask: np.ndarray, output_path: str):
     plt.axis('off')
     plt.savefig(output_path, bbox_inches='tight', pad_inches=0)
     plt.close()
-    print(f"✅ Overlay image saved: {output_path}")
+    print(f"✅ Overlay saved: {output_path}")
