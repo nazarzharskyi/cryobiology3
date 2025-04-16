@@ -1,11 +1,6 @@
 import os
 import cv2
-import matplotlib.pyplot as plt
 from cellpose import models, core
-from cellpose.io import save_masks
-from cellpose.utils import masks_to_outlines
-from skimage.segmentation import find_boundaries
-
 
 class CellposeSegmenter:
     """
@@ -57,26 +52,3 @@ class CellposeSegmenter:
         """
         masks, _, _ = self.model.eval(image, diameter=None, channels=[0, 0])
         return masks
-
-    def visualize(self, image, masks, output_path):
-        """
-        Visualize the segmentation result and save it to the output path.
-        :param image: Original image as a numpy array.
-        :param masks: Segmentation masks as a numpy array.
-        :param output_path: Path to save the overlay visualization.
-        """
-        # Получаем границы масок
-        boundaries = find_boundaries(masks, mode='outer')
-
-        # Создаём копию изображения
-        overlaid = image.copy()
-
-        # Покрасим границы в красный
-        overlaid[boundaries] = [255, 0, 0]
-
-        # Сохраняем изображение
-        plt.figure(figsize=(10, 10))
-        plt.imshow(overlaid)
-        plt.axis('off')
-        plt.savefig(output_path)
-        plt.close()
