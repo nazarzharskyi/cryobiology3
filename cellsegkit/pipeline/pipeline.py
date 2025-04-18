@@ -6,7 +6,7 @@ model loading, image importing, segmentation, and result exporting.
 """
 
 import os
-from typing import Tuple, Union, Any
+from typing import Tuple, Union, Any, List, Set
 
 from cellsegkit.importer.importer import find_images
 from cellsegkit.exporter.exporter import (
@@ -17,11 +17,15 @@ from cellsegkit.exporter.exporter import (
 )
 
 
+# Valid export formats
+VALID_EXPORT_FORMATS = {"overlay", "npy", "png", "yolo"}
+
+
 def run_segmentation(
     segmenter: Any,
     input_dir: str,
     output_dir: str,
-    export_formats: Tuple[str, ...] = ("overlay", "npy", "png", "yolo")
+    export_formats: Union[Tuple[str, ...], List[str], Set[str]] = ("overlay", "npy", "png", "yolo")
 ) -> None:
     """
     Run full segmentation pipeline using a given segmenter on a folder of images.
@@ -30,17 +34,42 @@ def run_segmentation(
         segmenter: An instance of a segmenter (must have .load_image() and .segment())
         input_dir: Directory of input images
         output_dir: Directory to save results
-        export_formats: Tuple of formats to export: overlay, npy, png, yolo
-    """
-    image_paths = find_images(input_dir)
+        export_formats: Formats to export, can be any combination of: "overlay", "npy", "png", "yolo"
+                       Default is all formats.
 
+    Raises:
+        ValueError: If any of the specified export formats is invalid
+    """
+    # Validate export formats
+    if not export_formats:
+        raise ValueError("At least one export format must be specified")
+
+    invalid_formats = set(export_formats) - VALID_EXPORT_FORMATS
+    if invalid_formats:
+        raise ValueError(
+            f"Invalid export format(s): {', '.join(invalid_formats)}. "
+            f"Valid formats are: {', '.join(VALID_EXPORT_FORMATS)}"
+        )
+
+    # Find images
+    image_paths = find_images(input_dir)
+    if not image_paths:
+        print(f"No images found in {input_dir}")
+        return
+
+    print(f"Found {len(image_paths)} images. Exporting formats: {', '.join(export_formats)}")
+
+    # Process each image
     for image_path in image_paths:
         try:
+            # Load and segment image
             image = segmenter.load_image(image_path)
             masks = segmenter.segment(image)
 
+            # Get relative path for output
             relative_base = os.path.splitext(os.path.relpath(image_path, input_dir))[0]
 
+            # Export in selected formats
             if "overlay" in export_formats:
                 overlay_path = os.path.join(output_dir, "overlay", relative_base + ".png")
                 os.makedirs(os.path.dirname(overlay_path), exist_ok=True)
