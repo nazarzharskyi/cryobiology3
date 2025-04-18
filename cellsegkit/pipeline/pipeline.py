@@ -1,22 +1,36 @@
-from loader.model_loader import CellposeSegmenter
-from importer.importer import find_images
-from exporter.exporter import save_mask_as_npy, save_mask_as_png, export_yolo_annotations, draw_overlay
-from loader.model_loader import SegmenterFactory
+"""
+Pipeline module for cell segmentation.
+
+This module provides a unified workflow for cell segmentation, combining
+model loading, image importing, segmentation, and result exporting.
+"""
+
 import os
+from typing import Tuple, Union, Any
+
+from cellsegkit.importer.importer import find_images
+from cellsegkit.exporter.exporter import (
+    save_mask_as_npy,
+    save_mask_as_png,
+    export_yolo_annotations,
+    draw_overlay,
+)
+
 
 def run_segmentation(
-    segmenter,
-    input_dir,
-    output_dir,
-    export_formats=("overlay", "npy", "png", "yolo")
-):
+    segmenter: Any,
+    input_dir: str,
+    output_dir: str,
+    export_formats: Tuple[str, ...] = ("overlay", "npy", "png", "yolo")
+) -> None:
     """
     Run full segmentation pipeline using a given segmenter on a folder of images.
 
-    :param segmenter: An instance of a segmenter (must have .load_image() and .segment())
-    :param input_dir: Directory of input images
-    :param output_dir: Directory to save results
-    :param export_formats: Tuple of formats to export: overlay, npy, png, yolo
+    Args:
+        segmenter: An instance of a segmenter (must have .load_image() and .segment())
+        input_dir: Directory of input images
+        output_dir: Directory to save results
+        export_formats: Tuple of formats to export: overlay, npy, png, yolo
     """
     image_paths = find_images(input_dir)
 

@@ -1,3 +1,10 @@
+"""
+Exporter module for saving segmentation results.
+
+This module provides functions for exporting segmentation masks in various formats,
+including numpy arrays, PNG images, YOLO annotations, and visual overlays.
+"""
+
 import numpy as np
 from PIL import Image
 import os
@@ -7,12 +14,13 @@ import matplotlib.pyplot as plt
 from skimage.segmentation import find_boundaries
 
 
-def save_mask_as_npy(mask: np.ndarray, output_path: str):
+def save_mask_as_npy(mask: np.ndarray, output_path: str) -> None:
     """
     Saves the segmentation mask as a .npy file.
 
-    :param mask: Input mask as a numpy array.
-    :param output_path: Path where the .npy file will be saved.
+    Args:
+        mask: Input mask as a numpy array
+        output_path: Path where the .npy file will be saved
     """
     try:
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
@@ -22,12 +30,13 @@ def save_mask_as_npy(mask: np.ndarray, output_path: str):
         print(f"❌ Failed to save mask as .npy: {e}")
 
 
-def save_mask_as_png(mask: np.ndarray, output_path: str):
+def save_mask_as_png(mask: np.ndarray, output_path: str) -> None:
     """
     Saves the segmentation mask as an indexed PNG file.
 
-    :param mask: Input mask with integer labels as a numpy array.
-    :param output_path: Path where the PNG file will be saved.
+    Args:
+        mask: Input mask with integer labels as a numpy array
+        output_path: Path where the PNG file will be saved
     """
     try:
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
@@ -38,18 +47,24 @@ def save_mask_as_png(mask: np.ndarray, output_path: str):
         print(f"❌ Failed to save mask as PNG: {e}")
 
 
-def export_yolo_annotations(mask: np.ndarray, output_txt_path: str, image_size: Tuple[int, int], class_id: int = 0):
+def export_yolo_annotations(
+    mask: np.ndarray, 
+    output_txt_path: str, 
+    image_size: Tuple[int, int], 
+    class_id: int = 0
+) -> None:
     """
     Converts the segmentation mask into YOLO-format bounding boxes and saves to a .txt file.
 
-    :param mask: Input mask with integer labels as a numpy array.
-    :param output_txt_path: Path where the annotations .txt will be saved.
-    :param image_size: Tuple as (width, height) of the original image.
-    :param class_id: Class ID to assign to all bounding boxes. Default is 0.
+    Args:
+        mask: Input mask with integer labels as a numpy array
+        output_txt_path: Path where the annotations .txt will be saved
+        image_size: Tuple as (width, height) of the original image
+        class_id: Class ID to assign to all bounding boxes. Default is 0
     """
     try:
         os.makedirs(os.path.dirname(output_txt_path), exist_ok=True)
-        height, width = image_size
+        width, height = image_size
         annotations = []
 
         # Find unique object IDs in the mask (excluding background, label 0)
@@ -79,13 +94,15 @@ def export_yolo_annotations(mask: np.ndarray, output_txt_path: str, image_size: 
     except Exception as e:
         print(f"❌ Failed to export YOLO annotations: {e}")
 
-def draw_overlay(image: np.ndarray, mask: np.ndarray, output_path: str):
+
+def draw_overlay(image: np.ndarray, mask: np.ndarray, output_path: str) -> None:
     """
     Draw boundaries on top of the image and save as an overlay PNG.
 
-    :param image: Original image (grayscale or RGB) as numpy array
-    :param mask: Segmentation mask (labels)
-    :param output_path: Path to save overlay result
+    Args:
+        image: Original image (grayscale or RGB) as numpy array
+        mask: Segmentation mask (labels)
+        output_path: Path to save overlay result
     """
     boundaries = find_boundaries(mask, mode='outer')
 
