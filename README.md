@@ -94,6 +94,42 @@ mask = segmenter.segment(image)
 draw_overlay(image, mask, "path/to/output/overlay.png")
 ```
 
+### Converting Between Mask Formats
+
+```python
+from cellsegkit import convert_mask_format
+
+# Convert from .npy to .png
+convert_mask_format(
+    mask_path="path/to/mask.npy",
+    output_format="png",
+    output_path="path/to/output/mask.png"
+)
+
+# Convert from .npy to YOLO format (requires original image)
+convert_mask_format(
+    mask_path="path/to/mask.npy",
+    output_format="yolo",
+    output_path="path/to/output/annotations.txt",
+    original_image_path="path/to/original/image.png"  # Required for YOLO format
+)
+
+# Convert from .png to overlay visualization (requires original image)
+convert_mask_format(
+    mask_path="path/to/mask.png",
+    output_format="overlay",
+    output_path="path/to/output/overlay.png",
+    original_image_path="path/to/original/image.png"  # Required for overlay
+)
+
+# Convert from .png to .npy
+convert_mask_format(
+    mask_path="path/to/mask.png",
+    output_format="npy",
+    output_path="path/to/output/mask.npy"
+)
+```
+
 ### Custom Export Workflow
 
 ```python
