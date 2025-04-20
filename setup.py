@@ -5,6 +5,19 @@ import os
 with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
+# This setup.py file is configured to support both local installation (pip install .)
+# and installation from GitHub (pip install git+https://github.com/Falian2048/cellsegkit.git).
+# 
+# Core dependencies are installed by default. Optional dependencies can be installed using:
+# - pip install ".[cellsam]" - For CellSAM support
+# - pip install ".[yolo]" - For YOLO format support
+# - pip install ".[gpu]" - For GPU monitoring
+# - pip install ".[dev]" - For development tools
+# - pip install ".[all]" - For all optional dependencies
+#
+# When installing from GitHub, use:
+# pip install "https://github.com/nazarzharskyi/cryobiology3.git#egg=cellsegkit[all]"
+
 setup(
     name="cellsegkit",
     version="0.1.0",
@@ -13,7 +26,8 @@ setup(
     long_description_content_type="text/markdown",
     author="Fedir Yarovyi",
     author_email="fedor.yarovoyi2048@gmail.com",
-    url="https://github.com/Falian2048/cellsegkit",
+    url="https://github.com/nazarzharskyi/cryobiology3",
+    download_url="https://github.com/nazarzharskyi/cryobiology3/archive/refs/tags/v0.1.0.tar.gz",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 3 - Alpha",
@@ -39,8 +53,11 @@ setup(
         "psutil>=5.9.0",
     ],
     extras_require={
-        "cellsam": ["segment-anything", "cellSAM"],
-        "yolo": ["ultralytics"],
+        "cellsam": [
+            "segment-anything @ git+https://github.com/facebookresearch/segment-anything.git@dca509fe793f601edb92606367a655c15ac00fdf",
+            "cellSAM"
+        ],
+        "yolo": ["ultralytics>=8.0.0"],
         "gpu": ["pynvml>=11.0.0"],
         "dev": [
             "pytest>=6.0.0",
@@ -49,9 +66,9 @@ setup(
             "flake8>=3.9.2",
         ],
         "all": [
-            "segment-anything", 
+            "segment-anything @ git+https://github.com/facebookresearch/segment-anything.git@dca509fe793f601edb92606367a655c15ac00fdf", 
             "cellSAM", 
-            "ultralytics", 
+            "ultralytics>=8.0.0", 
             "pynvml>=11.0.0"
         ],
     },
