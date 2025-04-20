@@ -20,7 +20,7 @@ A toolkit for cell segmentation using Cellpose and CellSAM models.
 ### Basic Installation
 
 ```bash
-pip install cellsegkit
+pip install git+https://github.com/nazarzharskyi/cryobiology3.git
 ```
 
 ### With CellSAM Support
@@ -44,7 +44,7 @@ pip install "cellsegkit[gpu]"
 ### Full Installation (with all dependencies)
 
 ```bash
-pip install "cellsegkit[all]"
+pip install git+https://github.com/nazarzharskyi/cryobiology3.git
 ```
 
 ## Quick Start
