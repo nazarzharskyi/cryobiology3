@@ -7,9 +7,14 @@ mask formats without re-running segmentation.
 """
 
 __version__ = "0.1.0"
+__author__ = "Fedir Yarovyi"
+__license__ = "MIT"
 
 from cellsegkit.loader import SegmenterFactory
 from cellsegkit.pipeline import run_segmentation
 from cellsegkit.converter import convert_mask_format
+
+# Import utils module for internal use
+import cellsegkit.utils
 
 __all__ = ["SegmenterFactory", "run_segmentation", "convert_mask_format"]
