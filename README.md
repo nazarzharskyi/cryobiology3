@@ -23,28 +23,43 @@ A toolkit for cell segmentation using Cellpose and CellSAM models.
 pip install git+https://github.com/nazarzharskyi/cryobiology3.git
 ```
 
-### With CellSAM Support
+### With Optional Dependencies
+
+You can install optional dependencies by specifying extras:
 
 ```bash
-pip install "cellsegkit[cellsam]"
+# With CellSAM Support
+pip install "git+https://github.com/nazarzharskyi/cryobiology3.git#egg=cellsegkit[cellsam]"
+
+# With YOLO Support
+pip install "git+https://github.com/nazarzharskyi/cryobiology3.git#egg=cellsegkit[yolo]"
+
+# With GPU Monitoring
+pip install "git+https://github.com/nazarzharskyi/cryobiology3.git#egg=cellsegkit[gpu]"
+
+# With Development Tools
+pip install "git+https://github.com/nazarzharskyi/cryobiology3.git#egg=cellsegkit[dev]"
+
+# Full Installation (with all optional dependencies)
+pip install "git+https://github.com/nazarzharskyi/cryobiology3.git#egg=cellsegkit[all]"
 ```
 
-### With YOLO Support
+### Local Installation (after cloning the repository)
 
 ```bash
-pip install "cellsegkit[yolo]"
-```
+# Clone the repository
+git clone https://github.com/nazarzharskyi/cryobiology3.git
+cd cryobiology3
 
-### With GPU Monitoring
+# Basic installation
+pip install .
 
-```bash
-pip install "cellsegkit[gpu]"
-```
-
-### Full Installation (with all dependencies)
-
-```bash
-pip install git+https://github.com/nazarzharskyi/cryobiology3.git
+# With optional dependencies
+pip install ".[cellsam]"  # For CellSAM support
+pip install ".[yolo]"     # For YOLO format support
+pip install ".[gpu]"      # For GPU monitoring
+pip install ".[dev]"      # For development tools
+pip install ".[all]"      # For all optional dependencies
 ```
 
 ## Quick Start
@@ -204,6 +219,65 @@ Optional dependencies:
 - segment-anything, cellSAM (for CellSAM support)
 - ultralytics (for YOLO format support)
 - pynvml (for GPU monitoring)
+
+## Testing the Installation
+
+To verify that the package is installed correctly and can be imported, you can run the following commands in a Python interpreter:
+
+```python
+import cellsegkit
+print(cellsegkit.__version__)  # Should print the version number
+
+# Test importing the main components
+from cellsegkit import SegmenterFactory, run_segmentation, convert_mask_format
+print("Import successful!")
+```
+
+### Testing in a Clean Virtual Environment
+
+To test the installation in a clean virtual environment:
+
+```bash
+# Create and activate a new virtual environment
+python -m venv test_env
+# On Windows
+test_env\Scripts\activate
+# On macOS/Linux
+source test_env/bin/activate
+
+# Install from GitHub
+pip install git+https://github.com/nazarzharskyi/cryobiology3.git
+
+# Test the installation
+python -c "import cellsegkit; print(cellsegkit.__version__)"
+```
+
+### Using the Test Script
+
+The repository includes a test script that you can run to verify the installation:
+
+```bash
+# Clone the repository (if you haven't already)
+git clone https://github.com/nazarzharskyi/cryobiology3.git
+cd cryobiology3
+
+# Run the test script
+python examples/test_installation.py
+```
+
+Or if you've installed from GitHub:
+
+```bash
+# Download just the test script
+curl -O https://raw.githubusercontent.com/nazarzharskyi/cryobiology3/main/examples/test_installation.py
+# Or on Windows with PowerShell
+Invoke-WebRequest -Uri https://raw.githubusercontent.com/nazarzharskyi/cryobiology3/main/examples/test_installation.py -OutFile test_installation.py
+
+# Run the test script
+python test_installation.py
+```
+
+The test script will check if the package is installed correctly and if optional dependencies are available.
 
 ## License
 
