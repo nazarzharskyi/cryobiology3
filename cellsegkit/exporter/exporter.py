@@ -14,45 +14,60 @@ import matplotlib.pyplot as plt
 from skimage.segmentation import find_boundaries
 
 
-def save_mask_as_npy(mask: np.ndarray, output_path: str) -> None:
+def save_mask_as_npy(mask: np.ndarray, output_path: str, silent: bool = False) -> bool:
     """
     Saves the segmentation mask as a .npy file.
 
     Args:
         mask: Input mask as a numpy array
         output_path: Path where the .npy file will be saved
+        silent: If True, suppresses success messages (default: False)
+
+    Returns:
+        bool: True if successful, False otherwise
     """
     try:
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         np.save(output_path, mask)
-        print(f"✅ Mask saved as .npy: {output_path}")
+        if not silent:
+            print(f"✅ Mask saved as .npy: {output_path}")
+        return True
     except Exception as e:
         print(f"❌ Failed to save mask as .npy: {e}")
+        return False
 
 
-def save_mask_as_png(mask: np.ndarray, output_path: str) -> None:
+def save_mask_as_png(mask: np.ndarray, output_path: str, silent: bool = False) -> bool:
     """
     Saves the segmentation mask as an indexed PNG file.
 
     Args:
         mask: Input mask with integer labels as a numpy array
         output_path: Path where the PNG file will be saved
+        silent: If True, suppresses success messages (default: False)
+
+    Returns:
+        bool: True if successful, False otherwise
     """
     try:
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         mask_img = Image.fromarray(mask.astype(np.uint8), mode="P")  # Indexed PNG
         mask_img.save(output_path)
-        print(f"✅ Mask saved as PNG: {output_path}")
+        if not silent:
+            print(f"✅ Mask saved as PNG: {output_path}")
+        return True
     except Exception as e:
         print(f"❌ Failed to save mask as PNG: {e}")
+        return False
 
 
 def export_yolo_annotations(
     mask: np.ndarray, 
     output_txt_path: str, 
     image_size: Tuple[int, int], 
-    class_id: int = 0
-) -> None:
+    class_id: int = 0,
+    silent: bool = False
+) -> bool:
     """
     Converts the segmentation mask into YOLO-format bounding boxes and saves to a .txt file.
 
@@ -61,6 +76,10 @@ def export_yolo_annotations(
         output_txt_path: Path where the annotations .txt will be saved
         image_size: Tuple as (width, height) of the original image
         class_id: Class ID to assign to all bounding boxes. Default is 0
+        silent: If True, suppresses success messages (default: False)
+
+    Returns:
+        bool: True if successful, False otherwise
     """
     try:
         os.makedirs(os.path.dirname(output_txt_path), exist_ok=True)
@@ -90,12 +109,15 @@ def export_yolo_annotations(
         with open(output_txt_path, 'w') as f:
             f.write("\n".join(annotations))
 
-        print(f"✅ Annotations saved to {output_txt_path}")
+        if not silent:
+            print(f"✅ Annotations saved to {output_txt_path}")
+        return True
     except Exception as e:
         print(f"❌ Failed to export YOLO annotations: {e}")
+        return False
 
 
-def draw_overlay(image: np.ndarray, mask: np.ndarray, output_path: str) -> None:
+def draw_overlay(image: np.ndarray, mask: np.ndarray, output_path: str, silent: bool = False) -> bool:
     """
     Draw boundaries on top of the image and save as an overlay PNG.
 
@@ -103,24 +125,35 @@ def draw_overlay(image: np.ndarray, mask: np.ndarray, output_path: str) -> None:
         image: Original image (grayscale or RGB) as numpy array
         mask: Segmentation mask (labels)
         output_path: Path to save overlay result
+        silent: If True, suppresses success messages (default: False)
+
+    Returns:
+        bool: True if successful, False otherwise
     """
-    boundaries = find_boundaries(mask, mode='outer')
+    try:
+        boundaries = find_boundaries(mask, mode='outer')
 
-    # Handle grayscale → RGB conversion
-    if len(image.shape) == 2:
-        overlaid = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
-    elif image.shape[2] == 1:
-        overlaid = cv2.cvtColor(image[:, :, 0], cv2.COLOR_GRAY2RGB)
-    else:
-        overlaid = image.copy()
+        # Handle grayscale → RGB conversion
+        if len(image.shape) == 2:
+            overlaid = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+        elif image.shape[2] == 1:
+            overlaid = cv2.cvtColor(image[:, :, 0], cv2.COLOR_GRAY2RGB)
+        else:
+            overlaid = image.copy()
 
-    # Apply red boundaries
-    overlaid[boundaries] = [255, 0, 0]
+        # Apply red boundaries
+        overlaid[boundaries] = [255, 0, 0]
 
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    plt.figure(figsize=(10, 10))
-    plt.imshow(overlaid)
-    plt.axis('off')
-    plt.savefig(output_path, bbox_inches='tight', pad_inches=0)
-    plt.close()
-    print(f"✅ Overlay saved: {output_path}")
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        plt.figure(figsize=(10, 10))
+        plt.imshow(overlaid)
+        plt.axis('off')
+        plt.savefig(output_path, bbox_inches='tight', pad_inches=0)
+        plt.close()
+
+        if not silent:
+            print(f"✅ Overlay saved: {output_path}")
+        return True
+    except Exception as e:
+        print(f"❌ Failed to save overlay: {e}")
+        return False

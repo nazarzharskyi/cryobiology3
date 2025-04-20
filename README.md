@@ -12,6 +12,8 @@ A toolkit for cell segmentation using Cellpose and CellSAM models.
   - Indexed PNG masks
   - Visual overlays
 - **Unified Pipeline**: Simple API for running the complete segmentation workflow
+- **Format Conversion**: Convert between mask formats without re-running segmentation
+- **Resource Monitoring**: Track CPU and GPU utilization during processing
 
 ## Installation
 
@@ -21,10 +23,39 @@ A toolkit for cell segmentation using Cellpose and CellSAM models.
 pip install git+https://github.com/nazarzharskyi/cryobiology3.git
 ```
 
+### With CellSAM Support
+
+```bash
+pip install "cellsegkit[cellsam]"
+```
+
+### With YOLO Support
+
+```bash
+pip install "cellsegkit[yolo]"
+```
+
+### With GPU Monitoring
+
+```bash
+pip install "cellsegkit[gpu]"
+```
+
+### Full Installation (with all dependencies)
+
+```bash
+pip install git+https://github.com/nazarzharskyi/cryobiology3.git
+```
+
 ## Quick Start
 
 ```python
+import os
 from cellsegkit import SegmenterFactory, run_segmentation
+
+# Define input and output directories
+input_dir = "dataset"
+output_dir = "output"
 
 # Create a segmenter (Cellpose or CellSAM)
 segmenter = SegmenterFactory.create(
@@ -35,8 +66,8 @@ segmenter = SegmenterFactory.create(
 # Run segmentation on a folder of images
 run_segmentation(
     segmenter=segmenter,
-    input_dir="path/to/input/images",
-    output_dir="path/to/output/directory",
+    input_dir=input_dir,
+    output_dir=output_dir,
     export_formats=("overlay", "npy", "png", "yolo")  # Choose which formats to export
 )
 ```
@@ -47,6 +78,7 @@ run_segmentation(
 
 ```python
 from cellsegkit.loader import CellposeSegmenter
+from cellsegkit.exporter import save_mask_as_npy
 
 # Create a Cellpose segmenter
 segmenter = CellposeSegmenter(model_type="cyto", use_gpu=True)
@@ -55,7 +87,8 @@ segmenter = CellposeSegmenter(model_type="cyto", use_gpu=True)
 image = segmenter.load_image("path/to/image.png")
 mask = segmenter.segment(image)
 
-# Now you can use the mask with the exporter functions
+# Save the mask as a NumPy array
+save_mask_as_npy(mask, "path/to/output/mask.npy")
 ```
 
 ### Using CellSAM Segmenter
@@ -63,7 +96,6 @@ mask = segmenter.segment(image)
 ```python
 from cellsegkit.loader import CellSAMSegmenter
 from cellsegkit.exporter import draw_overlay
-import matplotlib.pyplot as plt
 
 # Create a CellSAM segmenter
 segmenter = CellSAMSegmenter(use_gpu=True)
@@ -79,52 +111,43 @@ draw_overlay(image, mask, "path/to/output/overlay.png")
 ### Converting Between Mask Formats
 
 ```python
+import os
 from cellsegkit import convert_mask_format
+
+# Define input and output directories
+input_dir = "output"
+output_dir = "output/mask_conversion"
+os.makedirs(output_dir, exist_ok=True)
 
 # Convert from .npy to .png
 convert_mask_format(
-    mask_path="path/to/mask.npy",
+    mask_path=os.path.join(input_dir, "data_only/npy/train/image1.npy"),
     output_format="png",
-    output_path="path/to/output/mask.png"
+    output_path=os.path.join(output_dir, "npy_to_png.png")
 )
 
 # Convert from .npy to YOLO format (requires original image)
 convert_mask_format(
-    mask_path="path/to/mask.npy",
+    mask_path=os.path.join(input_dir, "data_only/npy/train/image1.npy"),
     output_format="yolo",
-    output_path="path/to/output/annotations.txt",
-    original_image_path="path/to/original/image.png"  # Required for YOLO format
-)
-
-# Convert from .png to overlay visualization (requires original image)
-convert_mask_format(
-    mask_path="path/to/mask.png",
-    output_format="overlay",
-    output_path="path/to/output/overlay.png",
-    original_image_path="path/to/original/image.png"  # Required for overlay
-)
-
-# Convert from .png to .npy
-convert_mask_format(
-    mask_path="path/to/mask.png",
-    output_format="npy",
-    output_path="path/to/output/mask.npy"
+    output_path=os.path.join(output_dir, "npy_to_yolo.txt"),
+    original_image_path="dataset/train/image1.tif"  # Required for YOLO format
 )
 ```
 
 ### Custom Export Workflow
 
 ```python
+import os
 from cellsegkit import SegmenterFactory
 from cellsegkit.importer import find_images
 from cellsegkit.exporter import save_mask_as_npy, export_yolo_annotations
-import os
 
 # Create segmenter
 segmenter = SegmenterFactory.create("cyto")
 
 # Find images
-image_paths = find_images("path/to/images")
+image_paths = find_images("dataset")
 
 # Process each image
 for image_path in image_paths:
@@ -134,6 +157,10 @@ for image_path in image_paths:
 
     # Custom export logic
     base_name = os.path.splitext(os.path.basename(image_path))[0]
+
+    # Create output directories
+    os.makedirs("output/npy", exist_ok=True)
+    os.makedirs("output/yolo", exist_ok=True)
 
     # Save as NumPy array
     save_mask_as_npy(mask, f"output/npy/{base_name}.npy")
@@ -147,6 +174,19 @@ for image_path in image_paths:
     )
 ```
 
+## Project Structure
+
+```
+cellsegkit/
+├── __init__.py           # Main package exports
+├── converter/            # Mask format conversion
+├── exporter/             # Export segmentation results
+├── importer/             # Import images
+├── loader/               # Load segmentation models
+├── pipeline/             # Unified segmentation workflow
+└── utils/                # Utility functions
+```
+
 ## Requirements
 
 - Python 3.8+
@@ -158,10 +198,12 @@ for image_path in image_paths:
 - scikit-image
 - torch
 - torchvision
+- psutil
 
 Optional dependencies:
-- segment-anything (for CellSAM support)
+- segment-anything, cellSAM (for CellSAM support)
 - ultralytics (for YOLO format support)
+- pynvml (for GPU monitoring)
 
 ## License
 
