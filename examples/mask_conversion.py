@@ -16,7 +16,7 @@ os.makedirs(output_dir, exist_ok=True)
 # Example 1: Convert .npy mask to PNG
 print("\n--- Example 1: Convert .npy mask to PNG ---")
 convert_mask_format(
-    mask_path=os.path.join(input_dir, "data_only/npy/example_dir/example.npy"),
+    mask_path=os.path.join(input_dir, "data_only/npy/image1.npy"),
     output_format="png",
     output_path=os.path.join(output_dir, "npy_to_png.png")
 )
@@ -24,25 +24,25 @@ convert_mask_format(
 # Example 2: Convert .npy mask to YOLO format
 print("\n--- Example 2: Convert .npy mask to YOLO format ---")
 convert_mask_format(
-    mask_path=os.path.join(input_dir, "data_only/npy/example_dir/example.npy"),
+    mask_path=os.path.join(input_dir, "data_only/npy/image1.npy"),
     output_format="yolo",
     output_path=os.path.join(output_dir, "npy_to_yolo.txt"),
-    original_image_path="dataset/example_dir/example.tif"
+    original_image_path="dataset/train/image1.tif"
 )
 
 # Example 3: Convert .png mask to overlay visualization
 print("\n--- Example 3: Convert .png mask to overlay visualization ---")
 convert_mask_format(
-    mask_path=os.path.join(input_dir, "visualization_only/png/example_dir/example.png"),
+    mask_path=os.path.join(input_dir, "visualization_only/png/image1.png"),
     output_format="overlay",
     output_path=os.path.join(output_dir, "png_to_overlay.png"),
-    original_image_path="dataset/example_dir/example.tif"
+    original_image_path="dataset/train/image1.tif"
 )
 
 # Example 4: Convert .png mask to .npy format
 print("\n--- Example 4: Convert .png mask to .npy format ---")
 convert_mask_format(
-    mask_path=os.path.join(input_dir, "visualization_only/example_dir/example.png"),
+    mask_path=os.path.join(input_dir, "all_formats/png/image1.png"),
     output_format="npy",
     output_path=os.path.join(output_dir, "png_to_npy.npy")
 )
