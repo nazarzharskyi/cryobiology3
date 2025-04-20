@@ -18,25 +18,7 @@ A toolkit for cell segmentation using Cellpose and CellSAM models.
 ### Basic Installation
 
 ```bash
-pip install cellsegkit
-```
-
-### With CellSAM Support
-
-```bash
-pip install "cellsegkit[cellsam]"
-```
-
-### With YOLO Support
-
-```bash
-pip install "cellsegkit[yolo]"
-```
-
-### Full Installation (with all dependencies)
-
-```bash
-pip install "cellsegkit[cellsam,yolo]"
+pip install git+https://github.com/nazarzharskyi/cellsegkit.git
 ```
 
 ## Quick Start
