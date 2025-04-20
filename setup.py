@@ -6,7 +6,7 @@ with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'README.md'),
     long_description = f.read()
 
 # This setup.py file is configured to support both local installation (pip install .)
-# and installation from GitHub (pip install git+https://github.com/Falian2048/cellsegkit.git).
+# and installation from GitHub (pip install git+https://github.com/nazarzharskyi/cryobiology3.git).
 # 
 # Core dependencies are installed by default. Optional dependencies can be installed using:
 # - pip install ".[cellsam]" - For CellSAM support
@@ -16,7 +16,7 @@ with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'README.md'),
 # - pip install ".[all]" - For all optional dependencies
 #
 # When installing from GitHub, use:
-# pip install "https://github.com/nazarzharskyi/cryobiology3.git#egg=cellsegkit[all]"
+# pip install "git+https://github.com/nazarzharskyi/cryobiology3.git#egg=cellsegkit[all]"
 
 setup(
     name="cellsegkit",
@@ -73,8 +73,8 @@ setup(
         ],
     },
     project_urls={
-        "Bug Tracker": "https://github.com/Falian2048/cellsegkit/issues",
-        "Documentation": "https://github.com/Falian2048/cellsegkit",
-        "Source Code": "https://github.com/Falian2048/cellsegkit",
+        "Bug Tracker": "https://github.com/nazarzharskyi/cryobiology3/issues",
+        "Documentation": "https://github.com/nazarzharskyi/cryobiology3",
+        "Source Code": "https://github.com/nazarzharskyi/cryobiology3",
     },
 )

@@ -9,8 +9,14 @@ import os
 import cv2
 from cellpose import models, core
 import numpy as np
-from cellSAM import segment_cellular_image
 from abc import ABC, abstractmethod
+
+# Try to import cellSAM, but don't fail if it's not installed
+try:
+    from cellSAM import segment_cellular_image
+    CELLSAM_AVAILABLE = True
+except ImportError:
+    CELLSAM_AVAILABLE = False
 
 
 def load_image_file(file_path, grayscale=False):
@@ -83,10 +89,17 @@ class SegmenterFactory:
 
         Raises:
             ValueError: If an unknown model_type is provided
+            ImportError: If the required dependencies for the selected model are not installed
         """
         if model_type.lower() in ["cyto", "nuclei", "cellpose"]:
             return CellposeSegmenter(model_type=model_type, use_gpu=use_gpu)
         elif model_type.lower() == "cellsam":
+            if not CELLSAM_AVAILABLE:
+                raise ImportError(
+                    "cellSAM is not installed. Install it with: "
+                    "pip install 'cellsegkit[cellsam]' or "
+                    "pip install 'git+https://github.com/nazarzharskyi/cryobiology3.git#egg=cellsegkit[cellsam]'"
+                )
             return CellSAMSegmenter(use_gpu=use_gpu)
         else:
             raise ValueError(f"Unknown model_type: {model_type}")
@@ -153,7 +166,16 @@ class CellSAMSegmenter(BaseSegmenter):
 
         Args:
             use_gpu: Whether to use GPU acceleration if available
+
+        Raises:
+            ImportError: If cellSAM is not installed
         """
+        if not CELLSAM_AVAILABLE:
+            raise ImportError(
+                "cellSAM is not installed. Install it with: "
+                "pip install 'cellsegkit[cellsam]' or "
+                "pip install 'git+https://github.com/nazarzharskyi/cryobiology3.git#egg=cellsegkit[cellsam]'"
+            )
         self.device = 'cuda' if use_gpu and self._cuda_available() else 'cpu'
 
     def load_image(self, file_path):
@@ -182,6 +204,12 @@ class CellSAMSegmenter(BaseSegmenter):
         Returns:
             Segmentation mask as a numpy array
         """
+        if not CELLSAM_AVAILABLE:
+            raise ImportError(
+                "cellSAM is not installed. Install it with: "
+                "pip install 'cellsegkit[cellsam]' or "
+                "pip install 'git+https://github.com/nazarzharskyi/cryobiology3.git#egg=cellsegkit[cellsam]'"
+            )
         mask, _, _ = segment_cellular_image(image, device=self.device)
         return mask
 
