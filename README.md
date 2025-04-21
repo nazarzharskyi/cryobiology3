@@ -87,197 +87,162 @@ run_segmentation(
 )
 ```
 
-## Advanced Usage
+### CLI Usage (main.py)
 
-### Using Cellpose Segmenter Directly
+```bash
+# Basic usage
+python main.py --model cyto --input dataset --output results
 
-```python
-from cellsegkit.loader import CellposeSegmenter
-from cellsegkit.exporter import save_mask_as_npy
+# Specify export formats
+python main.py --model cyto --input dataset --output results --export overlay,npy
 
-# Create a Cellpose segmenter
-segmenter = CellposeSegmenter(model_type="cyto", use_gpu=True)
-
-# Load and segment a single image
-image = segmenter.load_image("path/to/image.png")
-mask = segmenter.segment(image)
-
-# Save the mask as a NumPy array
-save_mask_as_npy(mask, "path/to/output/mask.npy")
+# Use CellSAM model
+python main.py --model cellsam --input dataset --output results
 ```
 
-### Using CellSAM Segmenter
+### Selective Export Examples
 
 ```python
-from cellsegkit.loader import CellSAMSegmenter
-from cellsegkit.exporter import draw_overlay
-
-# Create a CellSAM segmenter
-segmenter = CellSAMSegmenter(use_gpu=True)
-
-# Load and segment a single image
-image = segmenter.load_image("path/to/image.png")
-mask = segmenter.segment(image)
-
-# Export as overlay
-draw_overlay(image, mask, "path/to/output/overlay.png")
-```
-
-### Converting Between Mask Formats
-
-```python
-import os
-from cellsegkit import convert_mask_format
-
-# Define input and output directories
-input_dir = "output"
-output_dir = "output/mask_conversion"
-os.makedirs(output_dir, exist_ok=True)
-
-# Convert from .npy to .png
-convert_mask_format(
-    mask_path=os.path.join(input_dir, "data_only/npy/train/image1.npy"),
-    output_format="png",
-    output_path=os.path.join(output_dir, "npy_to_png.png")
+# Export only visualization formats
+run_segmentation(
+    segmenter=segmenter,
+    input_dir=input_dir,
+    output_dir="output/visualization_only",
+    export_formats=("overlay", "png")  # Only visualization formats
 )
 
-# Convert from .npy to YOLO format (requires original image)
-convert_mask_format(
-    mask_path=os.path.join(input_dir, "data_only/npy/train/image1.npy"),
-    output_format="yolo",
-    output_path=os.path.join(output_dir, "npy_to_yolo.txt"),
-    original_image_path="dataset/train/image1.tif"  # Required for YOLO format
+# Export only data formats
+run_segmentation(
+    segmenter=segmenter,
+    input_dir=input_dir,
+    output_dir="output/data_only",
+    export_formats=("npy", "yolo")  # Only data formats
 )
 ```
 
-### Custom Export Workflow
+## Configuration
+
+### GPU Detection
+
+CellSegKit automatically detects and utilizes GPU acceleration when available:
 
 ```python
-import os
-from cellsegkit import SegmenterFactory
-from cellsegkit.importer import find_images
-from cellsegkit.exporter import save_mask_as_npy, export_yolo_annotations
+from cellsegkit.utils.gpu_utils import get_device, check_gpu_availability
 
-# Create segmenter
-segmenter = SegmenterFactory.create("cyto")
+# Check if GPU is available
+gpu_available = check_gpu_availability(verbose=True)
+print(f"GPU available: {gpu_available}")
 
-# Find images
-image_paths = find_images("dataset")
-
-# Process each image
-for image_path in image_paths:
-    # Load and segment
-    image = segmenter.load_image(image_path)
-    mask = segmenter.segment(image)
-
-    # Custom export logic
-    base_name = os.path.splitext(os.path.basename(image_path))[0]
-
-    # Create output directories
-    os.makedirs("output/npy", exist_ok=True)
-    os.makedirs("output/yolo", exist_ok=True)
-
-    # Save as NumPy array
-    save_mask_as_npy(mask, f"output/npy/{base_name}.npy")
-
-    # Export YOLO annotations
-    image_height, image_width = image.shape[:2]
-    export_yolo_annotations(
-        mask, 
-        f"output/yolo/{base_name}.txt", 
-        (image_width, image_height)
-    )
+# Get the appropriate device (CUDA or CPU)
+device = get_device(prefer_gpu=True)
+print(f"Using device: {device}")
 ```
 
-## Project Structure
+### JSON Configuration
 
+You can also use JSON files for configuration:
+
+```json
+{
+  "model": "cyto",
+  "input_dir": "dataset",
+  "output_dir": "results",
+  "export_formats": ["overlay", "npy"],
+  "use_gpu": true
+}
 ```
-cellsegkit/
-├── __init__.py           # Main package exports
-├── converter/            # Mask format conversion
-├── exporter/             # Export segmentation results
-├── importer/             # Import images
-├── loader/               # Load segmentation models
-├── pipeline/             # Unified segmentation workflow
-└── utils/                # Utility functions
+
+### CLI Configuration
+
+When using the CLI, you can configure the segmentation process with various flags:
+
+```bash
+python main.py --model cyto --input dataset --output results --export overlay,npy --gpu
 ```
 
-## Requirements
+## API Reference
 
-- Python 3.8-3.11
-- cellpose
-- numpy
-- opencv-python
-- pillow
-- matplotlib
-- scikit-image
-- torch
-- torchvision
-- psutil
-
-Optional dependencies:
-- segment-anything, cellSAM (for CellSAM support)
-- ultralytics (for YOLO format support)
-- pynvml (for GPU monitoring)
-
-## Testing the Installation
-
-To verify that the package is installed correctly and can be imported, you can run the following commands in a Python interpreter:
+### SegmenterFactory.create()
 
 ```python
-import cellsegkit
-print(cellsegkit.__version__)  # Should print the version number
-
-# Test importing the main components
-from cellsegkit import SegmenterFactory, run_segmentation, convert_mask_format
-print("Import successful!")
+SegmenterFactory.create(model_type: str, use_gpu=True, sam_checkpoint_path=None)
 ```
 
-### Testing in a Clean Virtual Environment
+- **model_type**: Type of model to create ("cyto", "nuclei", or "cellsam")
+- **use_gpu**: Whether to use GPU acceleration if available
+- **sam_checkpoint_path**: Path to SAM checkpoint file (for CellSAM only)
 
-To test the installation in a clean virtual environment:
+Returns an instance of a segmenter class.
+
+### run_segmentation()
+
+```python
+run_segmentation(
+    segmenter: Any,
+    input_dir: str,
+    output_dir: str,
+    export_formats: Union[Tuple[str, ...], List[str], Set[str]] = ("overlay", "npy", "png", "yolo")
+)
+```
+
+- **segmenter**: An instance of a segmenter (must have .load_image() and .segment())
+- **input_dir**: Directory of input images
+- **output_dir**: Directory to save results
+- **export_formats**: Formats to export, can be any combination of: "overlay", "npy", "png", "yolo"
+
+### get_device()
+
+```python
+get_device(prefer_gpu: bool = True)
+```
+
+- **prefer_gpu**: Whether to prefer GPU over CPU if available
+
+Returns the appropriate device (CUDA or CPU) based on availability and preference.
+
+## Docker
+
+### Building the Docker Image
 
 ```bash
-# Create and activate a new virtual environment
-python -m venv test_env
-# On Windows
-test_env\Scripts\activate
-# On macOS/Linux
-source test_env/bin/activate
-
-# Install from GitHub
-pip install git+https://github.com/nazarzharskyi/cryobiology3.git
-
-# Test the installation
-python -c "import cellsegkit; print(cellsegkit.__version__)"
+# Build the Docker image
+docker build -t cellsegkit .
 ```
 
-### Using the Test Script
-
-The repository includes a test script that you can run to verify the installation:
+### Running the Container
 
 ```bash
-# Clone the repository (if you haven't already)
-git clone https://github.com/nazarzharskyi/cryobiology3.git
-cd cryobiology3
+# Run with basic options
+docker run -v /path/to/input:/input -v /path/to/output:/output cellsegkit --model cyto --input /input --output /output
 
-# Run the test script
-python examples/test_installation.py
+# Run with specific export formats
+docker run -v /path/to/input:/input -v /path/to/output:/output cellsegkit --model cyto --input /input --output /output --export overlay,npy
 ```
 
-Or if you've installed from GitHub:
+### Using docker-compose
+
+Create a `docker-compose.yml` file:
+
+```yaml
+version: '3'
+services:
+  cellsegkit:
+    build: .
+    volumes:
+      - ./dataset:/input
+      - ./results:/output
+    command: --model cyto --input /input --output /output
+```
+
+Then run:
 
 ```bash
-# Download just the test script
-curl -O https://raw.githubusercontent.com/nazarzharskyi/cryobiology3/main/examples/test_installation.py
-# Or on Windows with PowerShell
-Invoke-WebRequest -Uri https://raw.githubusercontent.com/nazarzharskyi/cryobiology3/main/examples/test_installation.py -OutFile test_installation.py
-
-# Run the test script
-python test_installation.py
+docker-compose up
 ```
 
-The test script will check if the package is installed correctly and if optional dependencies are available.
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
