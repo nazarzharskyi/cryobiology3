@@ -34,15 +34,33 @@ def _print_progress(progress_pct: float, message: Optional[str] = None) -> None:
     cpu_util = get_cpu_utilization()
     gpu_util = get_gpu_utilization()
 
-    # Display progress and resource utilization
-    resource_info = f"CPU: {cpu_util:.1f}%"
-    if gpu_util is not None:
-        resource_info += f", GPU: {gpu_util:.1f}%"
+    # Create progress bar (30 chars wide to fit more info on one line)
+    bar_width = 30
+    filled_width = int(progress_pct / 100 * bar_width)
+    bar = '█' * filled_width + '░' * (bar_width - filled_width)
 
+    # Build output string with carriage return to move cursor to start of line
+    output = f"\rProgress: [{bar}] {progress_pct:.1f}%"
+
+    # Add resource utilization
+    output += f" | CPU: {cpu_util:.1f}%"
+
+    if gpu_util is not None:
+        output += f" | GPU: {gpu_util:.1f}%"
+
+    # Add current file being processed (if message provided)
     if message:
-        print(f"[{progress_pct:.1f}%] {message} ({resource_info})")
-    else:
-        print(f"[{progress_pct:.1f}%] ({resource_info})")
+        # Truncate message if too long to prevent line wrapping
+        max_msg_len = 40
+        if len(message) > max_msg_len:
+            message = message[:max_msg_len-3] + "..."
+        output += f" | {message}"
+
+    # Add padding to ensure previous longer lines are fully overwritten
+    output += " " * 20
+
+    # Print the output and flush to ensure it's displayed immediately
+    print(output, end="", flush=True)
 
 
 def run_segmentation(
@@ -142,8 +160,8 @@ def run_segmentation(
         progress_pct = idx / total_images * 100
         _print_progress(progress_pct)
 
-    # Print summary
-    print(f"\n✅ Task completed! Processed {total_images} images.")
+    # Print summary - add a newline to move to the next line after the progress bar
+    print(f"\n\n✅ Task completed! Processed {total_images} images.")
 
     if error_files:
         print(f"\n❌ Errors occurred in {len(error_files)} files:")
