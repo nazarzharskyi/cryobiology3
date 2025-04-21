@@ -36,15 +36,38 @@ def _print_progress(progress_pct: float, message: Optional[str] = None) -> None:
     cpu_util = get_cpu_utilization()
     gpu_util = get_gpu_utilization()
 
-    # Display progress and resource utilization
-    resource_info = f"CPU: {cpu_util:.1f}%"
-    if gpu_util is not None:
-        resource_info += f", GPU: {gpu_util:.1f}%"
-
+    # Calculate number of lines that will be printed
+    lines_count = 3 if gpu_util is None else 4
     if message:
-        print(f"[{progress_pct:.1f}%] {message} ({resource_info})")
-    else:
-        print(f"[{progress_pct:.1f}%] ({resource_info})")
+        lines_count += 1
+
+    # Clear all previous lines
+    print("\033[J", end="")  # Clear from cursor to end of screen
+
+    # Create progress bar (50 chars wide)
+    bar_width = 50
+    filled_width = int(progress_pct / 100 * bar_width)
+    bar = '█' * filled_width + '░' * (bar_width - filled_width)
+
+    # Print progress bar
+    print(f"Progress: [{bar}] {progress_pct:.1f}%")
+
+    # Print resource utilization bars
+    cpu_bar_width = int(cpu_util / 100 * bar_width)
+    cpu_bar = '█' * cpu_bar_width + '░' * (bar_width - cpu_bar_width)
+    print(f"CPU Load: [{cpu_bar}] {cpu_util:.1f}%")
+
+    if gpu_util is not None:
+        gpu_bar_width = int(gpu_util / 100 * bar_width)
+        gpu_bar = '█' * gpu_bar_width + '░' * (bar_width - gpu_bar_width)
+        print(f"GPU Load: [{gpu_bar}] {gpu_util:.1f}%")
+
+    # Print current file being processed (if message provided)
+    if message:
+        print(f"Current: {message}")
+
+    # Move cursor back up to overwrite these lines next time
+    print(f"\033[{lines_count}A", end="")
 
 
 def _load_original_image(image_path: str) -> np.ndarray:
@@ -194,8 +217,8 @@ def convert_mask_format(
     _print_progress(100.0)
 
     if success:
-        print(f"\n✅ Task completed! Converted {os.path.basename(mask_path)} to {output_format} format: {os.path.basename(output_path)}")
+        print(f"\n\n\n\n\n✅ Task completed! Converted {os.path.basename(mask_path)} to {output_format} format: {os.path.basename(output_path)}")
     else:
-        print(f"\n❌ Error converting {os.path.basename(mask_path)} to {output_format} format:")
+        print(f"\n\n\n\n\n❌ Error converting {os.path.basename(mask_path)} to {output_format} format:")
         if error_message:
             print(f"  - {error_message}")
