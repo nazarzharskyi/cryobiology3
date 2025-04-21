@@ -10,6 +10,7 @@ import cv2
 from cellpose import models, core
 import numpy as np
 from abc import ABC, abstractmethod
+from cellsegkit.utils.gpu_utils import get_device, check_gpu_availability
 
 # Try to import cellSAM, but don't fail if it's not installed
 try:
@@ -122,7 +123,9 @@ class CellposeSegmenter(BaseSegmenter):
             use_gpu: Whether to use GPU acceleration if available
         """
         self.model_type = model_type
-        self.use_gpu = use_gpu and core.use_gpu()
+        # Check GPU availability using the gpu_utils module
+        self.device = get_device(prefer_gpu=use_gpu)
+        self.use_gpu = use_gpu and (str(self.device) == 'cuda')
         self.model = models.CellposeModel(gpu=self.use_gpu, model_type=self.model_type)
 
     def load_image(self, file_path):
@@ -176,7 +179,10 @@ class CellSAMSegmenter(BaseSegmenter):
                 "pip install 'cellsegkit[cellsam]' or "
                 "pip install 'git+https://github.com/nazarzharskyi/cryobiology3.git#egg=cellsegkit[cellsam]'"
             )
-        self.device = 'cuda' if use_gpu and self._cuda_available() else 'cpu'
+        # Get the appropriate device using gpu_utils
+        self.device = get_device(prefer_gpu=use_gpu)
+        # Convert torch.device to string for compatibility with cellSAM
+        self.device_str = str(self.device)
 
     def load_image(self, file_path):
         """
@@ -210,18 +216,6 @@ class CellSAMSegmenter(BaseSegmenter):
                 "pip install 'cellsegkit[cellsam]' or "
                 "pip install 'git+https://github.com/nazarzharskyi/cryobiology3.git#egg=cellsegkit[cellsam]'"
             )
-        mask, _, _ = segment_cellular_image(image, device=self.device)
+        # Use the string representation of the device for compatibility with cellSAM
+        mask, _, _ = segment_cellular_image(image, device=self.device_str)
         return mask
-
-    def _cuda_available(self):
-        """
-        Check if CUDA is available for GPU acceleration.
-
-        Returns:
-            Boolean indicating if CUDA is available
-        """
-        try:
-            import torch
-            return torch.cuda.is_available()
-        except ImportError:
-            return False
