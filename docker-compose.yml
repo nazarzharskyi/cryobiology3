@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  cellseg:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: cellseg:latest
+    container_name: cellseg
+    volumes:
+      - ./images:/app/images
+      - ./results:/app/results
+    environment:
+      - MODEL_TYPE=cyto  # Options: cyto, nuclei, cellpose, cellsam
+      - EXPORT_FORMATS=overlay,npy,png,yolo  # Comma-separated list of formats
+      - USE_GPU=true  # Set to false to disable GPU usage
+    # For GPU support, use the following deploy configuration
+    # Uncomment the next 4 lines to enable GPU support
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+# To run with GPU support:
+# docker-compose --compatibility up
+# OR
+# DOCKER_BUILDKIT=1 docker-compose up --build
+
+# To run with explicit GPU support:
+# docker-compose --compatibility up --build
