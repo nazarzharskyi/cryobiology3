@@ -77,7 +77,7 @@ Source-Code = "https://github.com/nazarzharskyi/cryobiology3"
 [tool.black]
 line-length = 88
 target-version = ["py38"]
-include = "\.pyi?$"
+include = '\.pyi?$'
 
 [tool.isort]
 profile = "black"
