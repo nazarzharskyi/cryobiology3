@@ -37,7 +37,7 @@ def _print_progress(progress_pct: float, message: Optional[str] = None) -> None:
     # Create progress bar (30 chars wide to fit more info on one line)
     bar_width = 30
     filled_width = int(progress_pct / 100 * bar_width)
-    bar = '█' * filled_width + '░' * (bar_width - filled_width)
+    bar = "█" * filled_width + "░" * (bar_width - filled_width)
 
     # Build output string with carriage return to move cursor to start of line
     output = f"\rProgress: [{bar}] {progress_pct:.1f}%"
@@ -53,7 +53,7 @@ def _print_progress(progress_pct: float, message: Optional[str] = None) -> None:
         # Truncate message if too long to prevent line wrapping
         max_msg_len = 40
         if len(message) > max_msg_len:
-            message = message[:max_msg_len-3] + "..."
+            message = message[: max_msg_len - 3] + "..."
         output += f" | {message}"
 
     # Add padding to ensure previous longer lines are fully overwritten
@@ -67,7 +67,12 @@ def run_segmentation(
     segmenter: Any,
     input_dir: str,
     output_dir: str,
-    export_formats: Union[Tuple[str, ...], List[str], Set[str]] = ("overlay", "npy", "png", "yolo")
+    export_formats: Union[Tuple[str, ...], List[str], Set[str]] = (
+        "overlay",
+        "npy",
+        "png",
+        "yolo",
+    ),
 ) -> None:
     """
     Run full segmentation pipeline using a given segmenter on a folder of images.
@@ -100,7 +105,9 @@ def run_segmentation(
         return
 
     total_images = len(image_paths)
-    print(f"Found {total_images} images. Exporting formats: {', '.join(export_formats)}")
+    print(
+        f"Found {total_images} images. Exporting formats: {', '.join(export_formats)}"
+    )
 
     # Track errors
     error_files = []
@@ -110,7 +117,10 @@ def run_segmentation(
         try:
             # Calculate progress percentage
             progress_pct = (idx - 1) / total_images * 100
-            _print_progress(progress_pct, f"Processing {idx}/{total_images}: {os.path.basename(image_path)}")
+            _print_progress(
+                progress_pct,
+                f"Processing {idx}/{total_images}: {os.path.basename(image_path)}",
+            )
 
             # Load and segment image
             image = segmenter.load_image(image_path)
@@ -124,7 +134,9 @@ def run_segmentation(
 
             # Export in selected formats
             if "overlay" in export_formats:
-                overlay_path = os.path.join(output_dir, "overlay", relative_base + ".png")
+                overlay_path = os.path.join(
+                    output_dir, "overlay", relative_base + ".png"
+                )
                 os.makedirs(os.path.dirname(overlay_path), exist_ok=True)
                 if not draw_overlay(image, masks, overlay_path, silent=True):
                     format_errors.append("overlay")
@@ -145,7 +157,9 @@ def run_segmentation(
                 txt_path = os.path.join(output_dir, "yolo", relative_base + ".txt")
                 os.makedirs(os.path.dirname(txt_path), exist_ok=True)
                 image_height, image_width = image.shape[:2]
-                if not export_yolo_annotations(masks, txt_path, (image_width, image_height), silent=True):
+                if not export_yolo_annotations(
+                    masks, txt_path, (image_width, image_height), silent=True
+                ):
                     format_errors.append("yolo")
 
             # If there were any format errors, add to the error list

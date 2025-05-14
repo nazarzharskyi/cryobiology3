@@ -47,19 +47,19 @@ def _print_progress(progress_pct: float, message: Optional[str] = None) -> None:
     # Create progress bar (50 chars wide)
     bar_width = 50
     filled_width = int(progress_pct / 100 * bar_width)
-    bar = '█' * filled_width + '░' * (bar_width - filled_width)
+    bar = "█" * filled_width + "░" * (bar_width - filled_width)
 
     # Print progress bar
     print(f"Progress: [{bar}] {progress_pct:.1f}%")
 
     # Print resource utilization bars
     cpu_bar_width = int(cpu_util / 100 * bar_width)
-    cpu_bar = '█' * cpu_bar_width + '░' * (bar_width - cpu_bar_width)
+    cpu_bar = "█" * cpu_bar_width + "░" * (bar_width - cpu_bar_width)
     print(f"CPU Load: [{cpu_bar}] {cpu_util:.1f}%")
 
     if gpu_util is not None:
         gpu_bar_width = int(gpu_util / 100 * bar_width)
-        gpu_bar = '█' * gpu_bar_width + '░' * (bar_width - gpu_bar_width)
+        gpu_bar = "█" * gpu_bar_width + "░" * (bar_width - gpu_bar_width)
         print(f"GPU Load: [{gpu_bar}] {gpu_util:.1f}%")
 
     # Print current file being processed (if message provided)
@@ -148,7 +148,7 @@ def convert_mask_format(
     output_format: str,
     output_path: str,
     original_image_path: Optional[str] = None,
-    class_id: int = 0
+    class_id: int = 0,
 ) -> None:
     """
     Convert a mask file from one format to another.
@@ -166,14 +166,21 @@ def convert_mask_format(
     """
     # Validate output format
     if output_format not in VALID_FORMATS:
-        raise ValueError(f"Invalid output format: {output_format}. Valid formats are: {', '.join(VALID_FORMATS)}")
+        raise ValueError(
+            f"Invalid output format: {output_format}. Valid formats are: {', '.join(VALID_FORMATS)}"
+        )
 
     # Check if original image is required but not provided
     if output_format in ["overlay", "yolo"] and not original_image_path:
-        raise ValueError(f"Original image path is required for '{output_format}' format")
+        raise ValueError(
+            f"Original image path is required for '{output_format}' format"
+        )
 
     # Display initial progress
-    _print_progress(0.0, f"Converting mask from {os.path.basename(mask_path)} to {output_format} format")
+    _print_progress(
+        0.0,
+        f"Converting mask from {os.path.basename(mask_path)} to {output_format} format",
+    )
 
     success = False
     error_message = None
@@ -185,7 +192,9 @@ def convert_mask_format(
         elif mask_path.lower().endswith((".png", ".jpg", ".jpeg")):
             mask = load_mask_from_png(mask_path)
         else:
-            raise ValueError(f"Unsupported mask file format: {os.path.splitext(mask_path)[1]}. Supported formats are .npy and .png")
+            raise ValueError(
+                f"Unsupported mask file format: {os.path.splitext(mask_path)[1]}. Supported formats are .npy and .png"
+            )
 
         # Show 50% progress after loading the mask
         _print_progress(50.0)
@@ -199,7 +208,9 @@ def convert_mask_format(
             # Load original image to get dimensions
             original_image = _load_original_image(original_image_path)
             image_height, image_width = original_image.shape[:2]
-            success = export_yolo_annotations(mask, output_path, (image_width, image_height), class_id, silent=True)
+            success = export_yolo_annotations(
+                mask, output_path, (image_width, image_height), class_id, silent=True
+            )
         elif output_format == "overlay":
             # Load original image
             original_image = _load_original_image(original_image_path)
@@ -217,8 +228,12 @@ def convert_mask_format(
     _print_progress(100.0)
 
     if success:
-        print(f"\n\n\n\n\n✅ Task completed! Converted {os.path.basename(mask_path)} to {output_format} format: {os.path.basename(output_path)}")
+        print(
+            f"\n\n\n\n\n✅ Task completed! Converted {os.path.basename(mask_path)} to {output_format} format: {os.path.basename(output_path)}"
+        )
     else:
-        print(f"\n\n\n\n\n❌ Error converting {os.path.basename(mask_path)} to {output_format} format:")
+        print(
+            f"\n\n\n\n\n❌ Error converting {os.path.basename(mask_path)} to {output_format} format:"
+        )
         if error_message:
             print(f"  - {error_message}")

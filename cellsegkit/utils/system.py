@@ -9,12 +9,14 @@ from typing import Union
 
 try:
     import torch
+
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
 
 try:
     import pynvml
+
     pynvml.nvmlInit()
     NVML_AVAILABLE = True
 except (ImportError, Exception):
