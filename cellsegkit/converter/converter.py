@@ -9,7 +9,8 @@ import os
 import numpy as np
 from PIL import Image
 import cv2
-from typing import Tuple, Optional, Union, Literal
+from typing import Optional
+from tqdm import tqdm
 
 from cellsegkit.utils.system import get_cpu_utilization, get_gpu_utilization
 from cellsegkit.exporter.exporter import (
@@ -22,52 +23,6 @@ from cellsegkit.exporter.exporter import (
 
 # Valid export formats
 VALID_FORMATS = {"overlay", "npy", "png", "yolo"}
-
-
-def _print_progress(progress_pct: float, message: Optional[str] = None) -> None:
-    """
-    Print progress with resource utilization information.
-
-    Args:
-        progress_pct: Progress percentage (0-100)
-        message: Optional message to display
-    """
-    # Get resource utilization
-    cpu_util = get_cpu_utilization()
-    gpu_util = get_gpu_utilization()
-
-    # Calculate number of lines that will be printed
-    lines_count = 3 if gpu_util is None else 4
-    if message:
-        lines_count += 1
-
-    # Clear all previous lines
-    print("\033[J", end="")  # Clear from cursor to end of screen
-
-    # Create progress bar (50 chars wide)
-    bar_width = 50
-    filled_width = int(progress_pct / 100 * bar_width)
-    bar = "█" * filled_width + "░" * (bar_width - filled_width)
-
-    # Print progress bar
-    print(f"Progress: [{bar}] {progress_pct:.1f}%")
-
-    # Print resource utilization bars
-    cpu_bar_width = int(cpu_util / 100 * bar_width)
-    cpu_bar = "█" * cpu_bar_width + "░" * (bar_width - cpu_bar_width)
-    print(f"CPU Load: [{cpu_bar}] {cpu_util:.1f}%")
-
-    if gpu_util is not None:
-        gpu_bar_width = int(gpu_util / 100 * bar_width)
-        gpu_bar = "█" * gpu_bar_width + "░" * (bar_width - gpu_bar_width)
-        print(f"GPU Load: [{gpu_bar}] {gpu_util:.1f}%")
-
-    # Print current file being processed (if message provided)
-    if message:
-        print(f"Current: {message}")
-
-    # Move cursor back up to overwrite these lines next time
-    print(f"\033[{lines_count}A", end="")
 
 
 def _load_original_image(image_path: str) -> np.ndarray:
@@ -177,15 +132,30 @@ def convert_mask_format(
         )
 
     # Display initial progress
-    _print_progress(
-        0.0,
-        f"Converting mask from {os.path.basename(mask_path)} to {output_format} format",
+    steps = 3  # Loading, converting, saving
+    pbar = tqdm(
+        total=steps,
+        desc=f"Converting to {output_format}",
+        bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}] {postfix}",
     )
 
     success = False
     error_message = None
 
     try:
+        cpu_util = get_cpu_utilization()
+        gpu_util = get_gpu_utilization()
+
+        postfix_dict = {
+            "CPU": f"{cpu_util:.1f}%",
+            "Step": "Loading mask",
+            "File": os.path.basename(mask_path),
+        }
+        if gpu_util is not None:
+            postfix_dict["GPU"] = f"{gpu_util:.1f}%"
+
+        pbar.set_postfix(postfix_dict)
+
         # Load the mask based on file extension
         if mask_path.lower().endswith(".npy"):
             mask = load_mask_from_npy(mask_path)
@@ -196,8 +166,10 @@ def convert_mask_format(
                 f"Unsupported mask file format: {os.path.splitext(mask_path)[1]}. Supported formats are .npy and .png"
             )
 
-        # Show 50% progress after loading the mask
-        _print_progress(50.0)
+        pbar.update(1)
+
+        postfix_dict["Step"] = "Converting"
+        pbar.set_postfix(postfix_dict)
 
         # Convert to the desired format
         if output_format == "npy":
@@ -220,12 +192,17 @@ def convert_mask_format(
 
             success = draw_overlay(original_image, mask, output_path, silent=True)
 
+        pbar.update(1)
+
+        postfix_dict["Step"] = "Saving"
+        pbar.set_postfix(postfix_dict)
+        pbar.update(1)
+
     except Exception as e:
         error_message = str(e)
         success = False
 
-    # Print final status
-    _print_progress(100.0)
+    pbar.close()
 
     if success:
         print(

@@ -6,7 +6,8 @@ model loading, image importing, segmentation, and result exporting.
 """
 
 import os
-from typing import Tuple, Union, Any, List, Set, Optional
+from typing import Tuple, Union, Any, List, Set
+from tqdm import tqdm
 
 from cellsegkit.utils.system import get_cpu_utilization, get_gpu_utilization
 from cellsegkit.importer.importer import find_images
@@ -20,47 +21,6 @@ from cellsegkit.exporter.exporter import (
 
 # Valid export formats
 VALID_EXPORT_FORMATS = {"overlay", "npy", "png", "yolo"}
-
-
-def _print_progress(progress_pct: float, message: Optional[str] = None) -> None:
-    """
-    Print progress with resource utilization information.
-
-    Args:
-        progress_pct: Progress percentage (0-100)
-        message: Optional message to display
-    """
-    # Get resource utilization
-    cpu_util = get_cpu_utilization()
-    gpu_util = get_gpu_utilization()
-
-    # Create progress bar (30 chars wide to fit more info on one line)
-    bar_width = 30
-    filled_width = int(progress_pct / 100 * bar_width)
-    bar = "█" * filled_width + "░" * (bar_width - filled_width)
-
-    # Build output string with carriage return to move cursor to start of line
-    output = f"\rProgress: [{bar}] {progress_pct:.1f}%"
-
-    # Add resource utilization
-    output += f" | CPU: {cpu_util:.1f}%"
-
-    if gpu_util is not None:
-        output += f" | GPU: {gpu_util:.1f}%"
-
-    # Add current file being processed (if message provided)
-    if message:
-        # Truncate message if too long to prevent line wrapping
-        max_msg_len = 40
-        if len(message) > max_msg_len:
-            message = message[: max_msg_len - 3] + "..."
-        output += f" | {message}"
-
-    # Add padding to ensure previous longer lines are fully overwritten
-    output += " " * 20
-
-    # Print the output and flush to ensure it's displayed immediately
-    print(output, end="", flush=True)
 
 
 def run_segmentation(
@@ -112,15 +72,28 @@ def run_segmentation(
     # Track errors
     error_files = []
 
+    pbar = tqdm(
+        image_paths,
+        desc="Processing images",
+        total=total_images,
+        bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}] {postfix}",
+    )
+
     # Process each image
-    for idx, image_path in enumerate(image_paths, 1):
+    for idx, image_path in enumerate(pbar, 1):
         try:
             # Calculate progress percentage
-            progress_pct = (idx - 1) / total_images * 100
-            _print_progress(
-                progress_pct,
-                f"Processing {idx}/{total_images}: {os.path.basename(image_path)}",
-            )
+            cpu_util = get_cpu_utilization()
+            gpu_util = get_gpu_utilization()
+
+            postfix_dict = {
+                "CPU": f"{cpu_util:.1f}%",
+                "File": os.path.basename(image_path),
+            }
+            if gpu_util is not None:
+                postfix_dict["GPU"] = f"{gpu_util:.1f}%"
+
+            pbar.set_postfix(postfix_dict)
 
             # Load and segment image
             image = segmenter.load_image(image_path)
@@ -168,11 +141,9 @@ def run_segmentation(
 
         except Exception as e:
             error_files.append((os.path.basename(image_path), str(e)))
-            print(f"❌ Error processing {os.path.basename(image_path)}: {e}")
+            pbar.write(f"❌ Error processing {os.path.basename(image_path)}: {e}")
 
-        # Update progress percentage
-        progress_pct = idx / total_images * 100
-        _print_progress(progress_pct)
+    pbar.close()
 
     # Print summary - add a newline to move to the next line after the progress bar
     print(f"\n\n✅ Task completed! Processed {total_images} images.")
