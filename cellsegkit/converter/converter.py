@@ -11,11 +11,9 @@ import json
 import numpy as np
 from PIL import Image
 import cv2
-from typing import Optional
 from tqdm import tqdm
-from typing import Tuple, Optional, Union, List, Dict, Any
+from typing import Optional, List
 import datetime
-import uuid
 import shutil
 
 from cellsegkit.utils.system import get_cpu_utilization, get_gpu_utilization

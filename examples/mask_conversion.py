@@ -145,11 +145,7 @@ convert_mask_format(
     mask_path=npy_mask_path,
     output_format="yolo",
     output_path=os.path.join(output_dir, "npy_to_yolo.txt"),
-<<<<<<< HEAD
-    original_image_path="dataset/train/image1.tif",
-=======
     original_image_path=original_image_path
->>>>>>> origin/dev
 )
 
 # Example 3: Convert .png mask to overlay visualization
@@ -158,11 +154,7 @@ convert_mask_format(
     mask_path=png_mask_path,
     output_format="overlay",
     output_path=os.path.join(output_dir, "png_to_overlay.png"),
-<<<<<<< HEAD
-    original_image_path="dataset/train/image1.tif",
-=======
     original_image_path=original_image_path
->>>>>>> origin/dev
 )
 
 # Example 4: Convert .png mask to .npy format

@@ -13,14 +13,9 @@ import tifffile
 
 
 def find_images(
-<<<<<<< HEAD
-    input_dir: str,
-    extensions: Tuple[str, ...] = (".png", ".jpg", ".jpeg", ".tif", ".tiff"),
-=======
     input_dir: str, 
     extensions: Tuple[str, ...] = ('.png', '.jpg', '.jpeg', '.tiff', '.tif', '.lsm'),
     recursive: bool = True
->>>>>>> origin/dev
 ) -> List[str]:
     """
     Recursively finds all image files in a directory.
@@ -28,12 +23,8 @@ def find_images(
     Args:
         input_dir: Path to the root directory to search
         extensions: Tuple of file extensions to include
-<<<<<<< HEAD
-
-=======
         recursive: Whether to search subdirectories recursively (default: True)
         
->>>>>>> origin/dev
     Returns:
         List of absolute paths to image files
 
@@ -64,10 +55,6 @@ def find_images(
     return sorted(image_paths)
 
 
-<<<<<<< HEAD
-def get_relative_output_path(
-    input_path: str, input_dir: str, output_dir: str, suffix: str = "_overlay.png"
-=======
 def load_image_with_metadata(
     image_path: str
 ) -> Tuple[np.ndarray, Dict[str, Union[Tuple[int, ...], int]]]:
@@ -141,7 +128,6 @@ def get_relative_output_path(
     input_dir: str, 
     output_dir: str, 
     suffix: str = '_output'
->>>>>>> origin/dev
 ) -> str:
     """
     Generates the output path preserving the folder structure of input_dir.
@@ -156,11 +142,6 @@ def get_relative_output_path(
         Path to the output file
     """
     relative_path = os.path.relpath(input_path, input_dir)
-<<<<<<< HEAD
-    base_name, _ = os.path.splitext(relative_path)
-    output_path = os.path.join(output_dir, base_name + suffix)
-    return output_path
-=======
     base_name, ext = os.path.splitext(relative_path)
     output_path = os.path.join(output_dir, base_name + suffix + ext)
     return output_path
@@ -199,4 +180,3 @@ def batch_load_images(
             results.append(image)
     
     return results
->>>>>>> origin/dev
