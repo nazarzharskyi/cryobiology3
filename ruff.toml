@@ -1,0 +1,7 @@
+indent-width = 4
+preview = true
+target-version = "py311"
+
+lint.select = [
+  "E702",   # multiple-statements-on-one-line-semicolon
+]

@@ -62,11 +62,11 @@ def save_mask_as_png(mask: np.ndarray, output_path: str, silent: bool = False) -
 
 
 def export_yolo_annotations(
-    mask: np.ndarray, 
-    output_txt_path: str, 
-    image_size: Tuple[int, int], 
+    mask: np.ndarray,
+    output_txt_path: str,
+    image_size: Tuple[int, int],
     class_id: int = 0,
-    silent: bool = False
+    silent: bool = False,
 ) -> bool:
     """
     Converts the segmentation mask into YOLO-format bounding boxes and saves to a .txt file.
@@ -103,10 +103,12 @@ def export_yolo_annotations(
             bbox_height = (y_max - y_min) / height
 
             # Write annotation: class_id, center_x, center_y, bbox_width, bbox_height
-            annotations.append(f"{class_id} {center_x:.6f} {center_y:.6f} {bbox_width:.6f} {bbox_height:.6f}")
+            annotations.append(
+                f"{class_id} {center_x:.6f} {center_y:.6f} {bbox_width:.6f} {bbox_height:.6f}"
+            )
 
         # Save annotations to file
-        with open(output_txt_path, 'w') as f:
+        with open(output_txt_path, "w") as f:
             f.write("\n".join(annotations))
 
         if not silent:
@@ -117,7 +119,9 @@ def export_yolo_annotations(
         return False
 
 
-def draw_overlay(image: np.ndarray, mask: np.ndarray, output_path: str, silent: bool = False) -> bool:
+def draw_overlay(
+    image: np.ndarray, mask: np.ndarray, output_path: str, silent: bool = False
+) -> bool:
     """
     Draw boundaries on top of the image and save as an overlay PNG.
 
@@ -131,7 +135,7 @@ def draw_overlay(image: np.ndarray, mask: np.ndarray, output_path: str, silent: 
         bool: True if successful, False otherwise
     """
     try:
-        boundaries = find_boundaries(mask, mode='outer')
+        boundaries = find_boundaries(mask, mode="outer")
 
         # Handle grayscale → RGB conversion
         if len(image.shape) == 2:
@@ -147,8 +151,8 @@ def draw_overlay(image: np.ndarray, mask: np.ndarray, output_path: str, silent: 
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         plt.figure(figsize=(10, 10))
         plt.imshow(overlaid)
-        plt.axis('off')
-        plt.savefig(output_path, bbox_inches='tight', pad_inches=0)
+        plt.axis("off")
+        plt.savefig(output_path, bbox_inches="tight", pad_inches=0)
         plt.close()
 
         if not silent:

@@ -15,6 +15,7 @@ from cellsegkit.utils.gpu_utils import get_device, check_gpu_availability
 # Try to import cellSAM, but don't fail if it's not installed
 try:
     from cellSAM import segment_cellular_image
+
     CELLSAM_AVAILABLE = True
 except ImportError:
     CELLSAM_AVAILABLE = False
@@ -114,7 +115,7 @@ class CellposeSegmenter(BaseSegmenter):
     perform segmentation, and visualize segmentation results.
     """
 
-    def __init__(self, model_type='cyto', use_gpu=True):
+    def __init__(self, model_type="cyto", use_gpu=True):
         """
         Initialize the CellposeSegmenter with specified model type ('cyto' or 'nuclei').
 
@@ -125,7 +126,7 @@ class CellposeSegmenter(BaseSegmenter):
         self.model_type = model_type
         # Check GPU availability using the gpu_utils module
         self.device = get_device(prefer_gpu=use_gpu)
-        self.use_gpu = use_gpu and (str(self.device) == 'cuda')
+        self.use_gpu = use_gpu and (str(self.device) == "cuda")
         self.model = models.CellposeModel(gpu=self.use_gpu, model_type=self.model_type)
 
     def load_image(self, file_path):

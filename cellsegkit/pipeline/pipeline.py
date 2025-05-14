@@ -6,7 +6,8 @@ model loading, image importing, segmentation, and result exporting.
 """
 
 import os
-from typing import Tuple, Union, Any, List, Set, Optional
+from typing import Tuple, Union, Any, List, Set
+from tqdm import tqdm
 
 from cellsegkit.utils.system import get_cpu_utilization, get_gpu_utilization
 from cellsegkit.importer.importer import find_images
@@ -22,52 +23,16 @@ from cellsegkit.exporter.exporter import (
 VALID_EXPORT_FORMATS = {"overlay", "npy", "png", "yolo"}
 
 
-def _print_progress(progress_pct: float, message: Optional[str] = None) -> None:
-    """
-    Print progress with resource utilization information.
-
-    Args:
-        progress_pct: Progress percentage (0-100)
-        message: Optional message to display
-    """
-    # Get resource utilization
-    cpu_util = get_cpu_utilization()
-    gpu_util = get_gpu_utilization()
-
-    # Create progress bar (30 chars wide to fit more info on one line)
-    bar_width = 30
-    filled_width = int(progress_pct / 100 * bar_width)
-    bar = '█' * filled_width + '░' * (bar_width - filled_width)
-
-    # Build output string with carriage return to move cursor to start of line
-    output = f"\rProgress: [{bar}] {progress_pct:.1f}%"
-
-    # Add resource utilization
-    output += f" | CPU: {cpu_util:.1f}%"
-
-    if gpu_util is not None:
-        output += f" | GPU: {gpu_util:.1f}%"
-
-    # Add current file being processed (if message provided)
-    if message:
-        # Truncate message if too long to prevent line wrapping
-        max_msg_len = 40
-        if len(message) > max_msg_len:
-            message = message[:max_msg_len-3] + "..."
-        output += f" | {message}"
-
-    # Add padding to ensure previous longer lines are fully overwritten
-    output += " " * 20
-
-    # Print the output and flush to ensure it's displayed immediately
-    print(output, end="", flush=True)
-
-
 def run_segmentation(
     segmenter: Any,
     input_dir: str,
     output_dir: str,
-    export_formats: Union[Tuple[str, ...], List[str], Set[str]] = ("overlay", "npy", "png", "yolo")
+    export_formats: Union[Tuple[str, ...], List[str], Set[str]] = (
+        "overlay",
+        "npy",
+        "png",
+        "yolo",
+    ),
 ) -> None:
     """
     Run full segmentation pipeline using a given segmenter on a folder of images.
@@ -100,17 +65,35 @@ def run_segmentation(
         return
 
     total_images = len(image_paths)
-    print(f"Found {total_images} images. Exporting formats: {', '.join(export_formats)}")
+    print(
+        f"Found {total_images} images. Exporting formats: {', '.join(export_formats)}"
+    )
 
     # Track errors
     error_files = []
 
+    pbar = tqdm(
+        image_paths,
+        desc="Processing images",
+        total=total_images,
+        bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}] {postfix}",
+    )
+
     # Process each image
-    for idx, image_path in enumerate(image_paths, 1):
+    for idx, image_path in enumerate(pbar, 1):
         try:
             # Calculate progress percentage
-            progress_pct = (idx - 1) / total_images * 100
-            _print_progress(progress_pct, f"Processing {idx}/{total_images}: {os.path.basename(image_path)}")
+            cpu_util = get_cpu_utilization()
+            gpu_util = get_gpu_utilization()
+
+            postfix_dict = {
+                "CPU": f"{cpu_util:.1f}%",
+                "File": os.path.basename(image_path),
+            }
+            if gpu_util is not None:
+                postfix_dict["GPU"] = f"{gpu_util:.1f}%"
+
+            pbar.set_postfix(postfix_dict)
 
             # Load and segment image
             image = segmenter.load_image(image_path)
@@ -124,7 +107,9 @@ def run_segmentation(
 
             # Export in selected formats
             if "overlay" in export_formats:
-                overlay_path = os.path.join(output_dir, "overlay", relative_base + ".png")
+                overlay_path = os.path.join(
+                    output_dir, "overlay", relative_base + ".png"
+                )
                 os.makedirs(os.path.dirname(overlay_path), exist_ok=True)
                 if not draw_overlay(image, masks, overlay_path, silent=True):
                     format_errors.append("overlay")
@@ -145,7 +130,9 @@ def run_segmentation(
                 txt_path = os.path.join(output_dir, "yolo", relative_base + ".txt")
                 os.makedirs(os.path.dirname(txt_path), exist_ok=True)
                 image_height, image_width = image.shape[:2]
-                if not export_yolo_annotations(masks, txt_path, (image_width, image_height), silent=True):
+                if not export_yolo_annotations(
+                    masks, txt_path, (image_width, image_height), silent=True
+                ):
                     format_errors.append("yolo")
 
             # If there were any format errors, add to the error list
@@ -154,11 +141,9 @@ def run_segmentation(
 
         except Exception as e:
             error_files.append((os.path.basename(image_path), str(e)))
-            print(f"❌ Error processing {os.path.basename(image_path)}: {e}")
+            pbar.write(f"❌ Error processing {os.path.basename(image_path)}: {e}")
 
-        # Update progress percentage
-        progress_pct = idx / total_images * 100
-        _print_progress(progress_pct)
+    pbar.close()
 
     # Print summary - add a newline to move to the next line after the progress bar
     print(f"\n\n✅ Task completed! Processed {total_images} images.")

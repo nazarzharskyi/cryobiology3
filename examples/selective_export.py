@@ -31,7 +31,7 @@ run_segmentation(
     segmenter=segmenter,
     input_dir=input_dir,
     output_dir=os.path.join(output_dir, "visualization"),
-    export_formats=["overlay", "png"]  # Using a list instead of tuple (both work)
+    export_formats=["overlay", "png"],  # Using a list instead of tuple (both work)
 )
 
 # Example: Export only machine learning compatible formats
@@ -41,7 +41,7 @@ run_segmentation(
     segmenter=segmenter,
     input_dir=input_dir,
     output_dir=os.path.join(output_dir, "ml_formats"),
-    export_formats=["yolo"]  # Only YOLO format
+    export_formats=["yolo"],  # Only YOLO format
 )
 
 # Example: Export only data formats for analysis
@@ -51,7 +51,7 @@ run_segmentation(
     segmenter=segmenter,
     input_dir=input_dir,
     output_dir=os.path.join(output_dir, "analysis"),
-    export_formats=["npy"]  # Only NumPy arrays
+    export_formats=["npy"],  # Only NumPy arrays
 )
 
 # Example: Export combination based on specific workflow needs
@@ -61,7 +61,7 @@ run_segmentation(
     segmenter=segmenter,
     input_dir=input_dir,
     output_dir=os.path.join(output_dir, "custom_workflow"),
-    export_formats=["overlay", "npy"]  # Visualization + data analysis
+    export_formats=["overlay", "npy"],  # Visualization + data analysis
 )
 
 print("\nSelective export examples complete!")

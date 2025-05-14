@@ -120,6 +120,39 @@ run_segmentation(
 )
 ```
 
+### Mask Format Conversion
+
+You can convert between different mask formats without re-running segmentation:
+
+```python
+from cellsegkit import convert_mask_format
+
+# Convert a .npy mask to PNG format
+convert_mask_format(
+    mask_path="output/data_only/npy/image1.npy",
+    output_format="png",
+    output_path="output/converted/image1.png"
+)
+
+# Convert a mask to YOLO format (requires original image)
+convert_mask_format(
+    mask_path="output/data_only/npy/image1.npy",
+    output_format="yolo",
+    output_path="output/converted/image1.txt",
+    original_image_path="dataset/image1.tif"
+)
+
+# Create an overlay visualization from a mask (requires original image)
+convert_mask_format(
+    mask_path="output/data_only/npy/image1.npy",
+    output_format="overlay",
+    output_path="output/converted/image1_overlay.png",
+    original_image_path="dataset/image1.tif"
+)
+```
+
+See the `examples/mask_conversion.py` file for a complete example of mask format conversion.
+
 ## Configuration
 
 ### GPU Detection
@@ -189,6 +222,24 @@ run_segmentation(
 - **input_dir**: Directory of input images
 - **output_dir**: Directory to save results
 - **export_formats**: Formats to export, can be any combination of: "overlay", "npy", "png", "yolo"
+
+### convert_mask_format()
+
+```python
+convert_mask_format(
+    mask_path: str,
+    output_format: str,
+    output_path: str,
+    original_image_path: Optional[str] = None,
+    class_id: int = 0
+)
+```
+
+- **mask_path**: Path to the input mask file (.npy or .png)
+- **output_format**: Desired output format ("npy", "png", "yolo", or "overlay")
+- **output_path**: Path where the converted file will be saved
+- **original_image_path**: Path to the original image (required for "overlay" and "yolo" formats)
+- **class_id**: Class ID to assign to all bounding boxes for YOLO format (default: 0)
 
 ### get_device()
 

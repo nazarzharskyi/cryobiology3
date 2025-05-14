@@ -2,12 +2,15 @@ from setuptools import setup, find_packages
 import os
 
 # Read the contents of the README file
-with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'README.md'), encoding='utf-8') as f:
+with open(
+    os.path.join(os.path.abspath(os.path.dirname(__file__)), "README.md"),
+    encoding="utf-8",
+) as f:
     long_description = f.read()
 
 # This setup.py file is configured to support both local installation (pip install .)
 # and installation from GitHub (pip install git+https://github.com/nazarzharskyi/cryobiology3.git).
-# 
+#
 # Core dependencies are installed by default. Optional dependencies can be installed using:
 # - pip install ".[cellsam]" - For CellSAM support
 # - pip install ".[yolo]" - For YOLO format support
@@ -55,7 +58,7 @@ setup(
     extras_require={
         "cellsam": [
             "segment-anything @ git+https://github.com/facebookresearch/segment-anything.git@dca509fe793f601edb92606367a655c15ac00fdf",
-            "cellSAM"
+            "cellSAM",
         ],
         "yolo": ["ultralytics>=8.0.0"],
         "gpu": ["pynvml>=11.0.0"],
@@ -66,10 +69,10 @@ setup(
             "flake8>=3.9.2",
         ],
         "all": [
-            "segment-anything @ git+https://github.com/facebookresearch/segment-anything.git@dca509fe793f601edb92606367a655c15ac00fdf", 
-            "cellSAM", 
-            "ultralytics>=8.0.0", 
-            "pynvml>=11.0.0"
+            "segment-anything @ git+https://github.com/facebookresearch/segment-anything.git@dca509fe793f601edb92606367a655c15ac00fdf",
+            "cellSAM",
+            "ultralytics>=8.0.0",
+            "pynvml>=11.0.0",
         ],
     },
     project_urls={
