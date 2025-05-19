@@ -9,8 +9,8 @@ import os
 from cellsegkit import SegmenterFactory, run_segmentation
 
 # Define input and output directories
-input_dir = r"C:\Users\KusFedots\PycharmProjects\dataset"
-output_dir = r"C:\Users\KusFedots\PycharmProjects\output"
+input_dir = r"C:\fun\dataset"
+output_dir = r"C:\fun\output"
 
 # Create a segmenter (Cellpose or CellSAM)
 segmenter = SegmenterFactory.create(
