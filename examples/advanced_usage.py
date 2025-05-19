@@ -19,8 +19,8 @@ from cellsegkit.exporter import (
 )
 
 # Define input and output directories
-input_dir = "dataset"
-output_dir = "output/advanced_example"
+input_dir = r"C:\fun\dataset"
+output_dir = r"C:\fun\output"
 
 # Create output directories
 os.makedirs(os.path.join(output_dir, "cellpose"), exist_ok=True)

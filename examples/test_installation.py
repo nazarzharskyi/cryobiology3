@@ -56,10 +56,10 @@ try:
     except ImportError:
         print("pynvml is not installed (optional dependency)")
 
-    print("\n✅ Installation test completed successfully!")
+    print("\n[SUCCESS] Installation test completed successfully!")
 
 except ImportError as e:
-    print(f"\n❌ Error: {e}")
+    print(f"\n[ERROR] Error: {e}")
     print("\nPlease make sure cellsegkit is installed correctly:")
     print("pip install git+https://github.com/nazarzharskyi/cryobiology3.git")
     print("\nFor optional dependencies, use:")

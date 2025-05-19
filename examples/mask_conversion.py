@@ -3,7 +3,7 @@ Mask conversion example for CellSegKit.
 
 This script demonstrates how to convert between different mask formats
 without re-running segmentation. It shows the functionality of the converter module
-which allows users to convert segmentation masks between different formats (npy, png, 
+which allows users to convert segmentation masks between different formats (npy, png,
 yolo, overlay) without having to re-run the segmentation process.
 
 Prerequisites:
@@ -15,6 +15,7 @@ Prerequisites:
 import os
 import sys
 from cellsegkit import convert_mask_format
+
 
 # Create sample mask if needed for demonstration
 def create_sample_mask(output_dir):
@@ -36,6 +37,7 @@ def create_sample_mask(output_dir):
     save_mask_as_png(mask, png_path)
 
     return npy_path, png_path
+
 
 # Define input and output directories
 # You can modify these paths to point to your own files
@@ -60,14 +62,14 @@ else:
     # Look for NPY files
     npy_dir = os.path.join(input_dir, "data_only", "npy")
     if os.path.exists(npy_dir):
-        npy_files = [f for f in os.listdir(npy_dir) if f.endswith('.npy')]
+        npy_files = [f for f in os.listdir(npy_dir) if f.endswith(".npy")]
         if npy_files:
             npy_mask_path = os.path.join(npy_dir, npy_files[0])
 
     # Look for PNG files
     png_dir = os.path.join(input_dir, "visualization_only", "png")
     if os.path.exists(png_dir):
-        png_files = [f for f in os.listdir(png_dir) if f.endswith('.png')]
+        png_files = [f for f in os.listdir(png_dir) if f.endswith(".png")]
         if png_files:
             png_mask_path = os.path.join(png_dir, png_files[0])
 
@@ -103,7 +105,7 @@ else:
     if os.path.exists(dataset_dir):
         for root, _, files in os.walk(dataset_dir):
             for file in files:
-                if file.endswith(('.png', '.jpg', '.tif', '.tiff')):
+                if file.endswith((".png", ".jpg", ".tif", ".tiff")):
                     original_image_path = os.path.join(root, file)
                     break
             if original_image_path:
@@ -145,7 +147,7 @@ convert_mask_format(
     mask_path=npy_mask_path,
     output_format="yolo",
     output_path=os.path.join(output_dir, "npy_to_yolo.txt"),
-    original_image_path=original_image_path
+    original_image_path=original_image_path,
 )
 
 # Example 3: Convert .png mask to overlay visualization
@@ -154,7 +156,7 @@ convert_mask_format(
     mask_path=png_mask_path,
     output_format="overlay",
     output_path=os.path.join(output_dir, "png_to_overlay.png"),
-    original_image_path=original_image_path
+    original_image_path=original_image_path,
 )
 
 # Example 4: Convert .png mask to .npy format
@@ -166,8 +168,12 @@ convert_mask_format(
 )
 
 print(f"\nMask conversion complete. Results saved to {output_dir}")
-print("\nThis example demonstrated how to use the converter module to convert between different mask formats:")
+print(
+    "\nThis example demonstrated how to use the converter module to convert between different mask formats:"
+)
 print("1. NPY to PNG: Binary mask saved as an image file")
 print("2. NPY to YOLO: Mask converted to YOLO annotation format (bounding boxes)")
 print("3. PNG to Overlay: Mask overlaid on the original image for visualization")
-print("4. PNG to NPY: Image mask converted to numpy array format for further processing")
+print(
+    "4. PNG to NPY: Image mask converted to numpy array format for further processing"
+)
