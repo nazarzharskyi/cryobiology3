@@ -17,6 +17,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import io
 
 from cellsegkit import SegmenterFactory, run_segmentation, convert_mask_format
+from cellsegkit.augmentation.augmentation import create_augmentor, run_segmentation_with_augmentation
 from cellsegkit.importer import find_images
 from cellsegkit.utils.gpu_utils import check_gpu_availability
 from cellsegkit.converter import VALID_FORMATS
@@ -38,6 +39,11 @@ class CellSegKitGUI:
         self.export_npy = tk.BooleanVar(value=True)
         self.export_png = tk.BooleanVar(value=True)
         self.export_yolo = tk.BooleanVar(value=True)
+
+        # Variables for augmentation
+        self.enable_augmentation = tk.BooleanVar(value=False)
+        self.augmentation_preset = tk.StringVar(value="default")
+        self.save_augmented = tk.BooleanVar(value=False)
 
         # Variables for mask conversion
         self.mask_path = tk.StringVar()
@@ -143,6 +149,23 @@ class CellSegKitGUI:
         ).pack(anchor=tk.W)
         ttk.Checkbutton(
             export_frame, text="YOLO (object detection)", variable=self.export_yolo
+        ).pack(anchor=tk.W)
+
+        # Augmentation options
+        aug_frame = ttk.LabelFrame(left_panel, text="Augmentation", padding=10)
+        aug_frame.pack(fill=tk.X, pady=(0, 10))
+        ttk.Checkbutton(
+            aug_frame, text="Enable Augmentation", variable=self.enable_augmentation
+        ).pack(anchor=tk.W)
+        ttk.Label(aug_frame, text="Preset:").pack(anchor=tk.W)
+        preset_combo = ttk.Combobox(
+            aug_frame,
+            textvariable=self.augmentation_preset,
+            values=["default", "light", "heavy", "geometric_only"],
+        )
+        preset_combo.pack(fill=tk.X, pady=(0, 5))
+        ttk.Checkbutton(
+            aug_frame, text="Save Augmented Images", variable=self.save_augmented
         ).pack(anchor=tk.W)
 
         # Action buttons
@@ -255,17 +278,117 @@ class CellSegKitGUI:
         self.status_var.set("Running segmentation...")
         threading.Thread(
             target=self._run_segmentation_thread,
+            args=(
+                input_dir,
+                output_dir,
+                export_formats,
+                self.enable_augmentation.get(),
+                self.augmentation_preset.get(),
+                self.save_augmented.get(),
+            ),
+        ).start()
+
+    def _run_segmentation_thread(self, input_dir, output_dir, export_formats, enable_aug, preset, save_aug):
+        try:
+            if enable_aug:
+                run_segmentation_with_augmentation(
+                    segmenter=self.segmenter,
+                    input_dir=input_dir,
+                    output_dir=output_dir,
+                    export_formats=export_formats,
+                    augmentor=preset,
+                    save_augmented_images=save_aug,
+                )
+            else:
+                run_segmentation(
+                    segmenter=self.segmenter,
+                    input_dir=input_dir,
+                    output_dir=output_dir,
+                    export_formats=export_formats,
+                )
+
+            # Update UI in the main thread
+            self.root.after(0, self._segmentation_complete, output_dir)
+        except Exception as e:
+            # Update UI in the main thread
+            self.root.after(0, self._segmentation_error, str(e))
+
+    def _segmentation_complete(self, output_dir):
+        self.status_var.set("Segmentation complete")
+        messagebox.showinfo(
+            "Success", f"Segmentation complete. Results saved to {output_dir}"
+        )
+
+        try:
+            self.load_segmentation_results(output_dir)
+        except:
+            pass
+
+    def run_segmentation(self):
+        if not self.image_paths:
+            messagebox.showerror("Error", "Please load images first")
+            return
+
+        input_dir = self.input_dir.get()
+        output_dir = self.output_dir.get()
+
+        if not output_dir:
+            messagebox.showerror("Error", "Please select an output directory")
+            return
+
+        # Get export formats
+        export_formats = []
+        if self.export_overlay.get():
+            export_formats.append("overlay")
+        if self.export_npy.get():
+            export_formats.append("npy")
+        if self.export_png.get():
+            export_formats.append("png")
+        if self.export_yolo.get():
+            export_formats.append("yolo")
+
+        if not export_formats:
+            messagebox.showerror("Error", "Please select at least one export format")
+            return
+
+        # Create segmenter
+        try:
+            self.status_var.set("Creating segmenter...")
+            self.root.update_idletasks()
+
+            self.segmenter = SegmenterFactory.create(
+                model_type=self.model_type.get(), use_gpu=self.use_gpu.get()
+            )
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to create segmenter: {str(e)}")
+            self.status_var.set("Error creating segmenter")
+            return
+
+        # Run segmentation in a separate thread
+        self.status_var.set("Running segmentation...")
+        threading.Thread(
+            target=self._run_segmentation_thread,
             args=(input_dir, output_dir, export_formats),
         ).start()
 
-    def _run_segmentation_thread(self, input_dir, output_dir, export_formats):
+    def _run_segmentation_thread(self, input_dir, output_dir, export_formats, enable_aug, preset, save_aug):
         try:
-            run_segmentation(
-                segmenter=self.segmenter,
-                input_dir=input_dir,
-                output_dir=output_dir,
-                export_formats=export_formats,
-            )
+            if enable_aug:
+                run_segmentation_with_augmentation(
+                    segmenter=self.segmenter,
+                    input_dir=input_dir,
+                    output_dir=output_dir,
+                    export_formats=export_formats,
+                    augmentor=preset,
+                    save_augmented_images=save_aug,
+                )
+            else:
+                run_segmentation(
+                    segmenter=self.segmenter,
+                    input_dir=input_dir,
+                    output_dir=output_dir,
+                    export_formats=export_formats,
+                )
 
             # Update UI in the main thread
             self.root.after(0, self._segmentation_complete, output_dir)
