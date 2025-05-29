@@ -8,7 +8,6 @@ for a custom cell segmentation workflow.
 import os
 import matplotlib.pyplot as plt
 import numpy as np
-
 from cellsegkit.loader import CellposeSegmenter, CellSAMSegmenter
 from cellsegkit.importer import find_images
 from cellsegkit.exporter import (
@@ -30,26 +29,27 @@ os.makedirs(os.path.join(output_dir, "cellsam"), exist_ok=True)
 image_paths = find_images(input_dir)
 print(f"Found {len(image_paths)} images")
 
-# Process first image only for this example
-if image_paths:
-    image_path = image_paths[0]
-    print(f"Processing image: {image_path}")
+# Create segmenters
+cellpose_segmenter = CellposeSegmenter(model_type="cyto", use_gpu=False)
+cellsam_segmenter = CellSAMSegmenter(use_gpu=False)
 
-    # Create segmenters
-    cellpose_segmenter = CellposeSegmenter(model_type="cyto", use_gpu=True)
-    cellsam_segmenter = CellSAMSegmenter(use_gpu=True)
+# Process all images in batch
+print("Running Cellpose segmentation on all images...")
+cellpose_results = cellpose_segmenter.batch_segment(image_paths)
+print(f"Completed Cellpose segmentation for {len(cellpose_results)} images")
 
-    # Load image for both segmenters
-    # Note: Each segmenter may load the image differently based on its requirements
-    cellpose_image = cellpose_segmenter.load_image(image_path)
-    cellsam_image = cellsam_segmenter.load_image(image_path)
+print("Running CellSAM segmentation on all images...")
+cellsam_results = cellsam_segmenter.batch_segment(image_paths)
+print(f"Completed CellSAM segmentation for {len(cellsam_results)} images")
 
-    # Perform segmentation with both models
-    cellpose_mask = cellpose_segmenter.segment(cellpose_image)
-    cellsam_mask = cellsam_segmenter.segment(cellsam_image)
-
+# Process the Cellpose results
+print("Exporting Cellpose results...")
+for image_path, cellpose_mask in cellpose_results.items():
     # Get base filename for output
     base_name = os.path.splitext(os.path.basename(image_path))[0]
+
+    # Load the original image for visualization
+    cellpose_image = cellpose_segmenter.load_image(image_path)
 
     # Export Cellpose results
     cellpose_output_base = os.path.join(output_dir, "cellpose", base_name)
@@ -69,6 +69,15 @@ if image_paths:
     # Create overlay visualization
     draw_overlay(cellpose_image, cellpose_mask, f"{cellpose_output_base}_overlay.png")
 
+# Process the CellSAM results
+print("Exporting CellSAM results...")
+for image_path, cellsam_mask in cellsam_results.items():
+    # Get base filename for output
+    base_name = os.path.splitext(os.path.basename(image_path))[0]
+
+    # Load the original image for visualization
+    cellsam_image = cellsam_segmenter.load_image(image_path)
+
     # Export CellSAM results
     cellsam_output_base = os.path.join(output_dir, "cellsam", base_name)
 
@@ -87,6 +96,4 @@ if image_paths:
 
     draw_overlay(cellsam_image_rgb, cellsam_mask, f"{cellsam_output_base}_overlay.png")
 
-    print(f"Processing complete. Results saved to {output_dir}")
-else:
-    print(f"No images found in {input_dir}")
+print(f"Processing complete. All results saved to {output_dir}")

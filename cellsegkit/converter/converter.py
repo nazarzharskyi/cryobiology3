@@ -102,7 +102,9 @@ def load_mask_from_png(file_path: str) -> np.ndarray:
         raise ValueError(f"Failed to load mask from PNG file: {e}")
 
 
-def load_mask_from_coco(file_path: str, image_id: Optional[int] = None, image_path: Optional[str] = None) -> np.ndarray:
+def load_mask_from_coco(
+    file_path: str, image_id: Optional[int] = None, image_path: Optional[str] = None
+) -> np.ndarray:
     """
     Load a segmentation mask from a COCO JSON file.
 
@@ -122,35 +124,37 @@ def load_mask_from_coco(file_path: str, image_id: Optional[int] = None, image_pa
         raise FileNotFoundError(f"COCO file not found: {file_path}")
 
     try:
-        with open(file_path, 'r') as f:
+        with open(file_path, "r") as f:
             coco_data = json.load(f)
-        
+
         # Check if we have images in the COCO file
-        if 'images' not in coco_data or not coco_data['images']:
+        if "images" not in coco_data or not coco_data["images"]:
             raise ValueError("No images found in COCO file")
-        
+
         # If multiple images and no image_id specified, raise error
-        if len(coco_data['images']) > 1 and image_id is None:
-            raise ValueError("Multiple images found in COCO file. Please specify image_id.")
-        
+        if len(coco_data["images"]) > 1 and image_id is None:
+            raise ValueError(
+                "Multiple images found in COCO file. Please specify image_id."
+            )
+
         # Get the target image
         target_image = None
         if image_id is not None:
             # Find image by ID
-            for img in coco_data['images']:
-                if img['id'] == image_id:
+            for img in coco_data["images"]:
+                if img["id"] == image_id:
                     target_image = img
                     break
             if target_image is None:
                 raise ValueError(f"Image with ID {image_id} not found in COCO file")
         else:
             # Use the first (and only) image
-            target_image = coco_data['images'][0]
-        
+            target_image = coco_data["images"][0]
+
         # Get image dimensions
-        width = target_image.get('width')
-        height = target_image.get('height')
-        
+        width = target_image.get("width")
+        height = target_image.get("height")
+
         # If dimensions not in COCO, try to get from image file
         if (width is None or height is None) and image_path:
             if os.path.exists(image_path):
@@ -158,47 +162,53 @@ def load_mask_from_coco(file_path: str, image_id: Optional[int] = None, image_pa
                 if img is not None:
                     height, width = img.shape[:2]
                 else:
-                    raise ValueError(f"Failed to load image to determine dimensions: {image_path}")
+                    raise ValueError(
+                        f"Failed to load image to determine dimensions: {image_path}"
+                    )
             else:
                 raise FileNotFoundError(f"Image file not found: {image_path}")
-        
+
         if width is None or height is None:
-            raise ValueError("Image dimensions not found in COCO file and no image path provided")
-        
+            raise ValueError(
+                "Image dimensions not found in COCO file and no image path provided"
+            )
+
         # Create empty mask
         mask = np.zeros((height, width), dtype=np.uint8)
-        
+
         # Find annotations for this image
-        image_id = target_image['id']
+        image_id = target_image["id"]
         instance_id = 1  # Start with 1 (0 is background)
-        
-        for annotation in coco_data.get('annotations', []):
-            if annotation.get('image_id') == image_id:
+
+        for annotation in coco_data.get("annotations", []):
+            if annotation.get("image_id") == image_id:
                 # Get segmentation data
-                segmentation = annotation.get('segmentation', [])
-                
+                segmentation = annotation.get("segmentation", [])
+
                 # Process each polygon
                 for polygon in segmentation:
                     # Convert flat list to points
                     points = []
                     for i in range(0, len(polygon), 2):
-                        if i+1 < len(polygon):
-                            points.append([polygon[i], polygon[i+1]])
-                    
+                        if i + 1 < len(polygon):
+                            points.append([polygon[i], polygon[i + 1]])
+
                     # Convert to numpy array
                     pts = np.array(points, dtype=np.int32)
-                    
+
                     # Fill polygon with instance ID
                     cv2.fillPoly(mask, [pts], instance_id)
                     instance_id += 1
-        
+
         return mask
-    
+
     except Exception as e:
         raise ValueError(f"Failed to load mask from COCO file: {e}")
 
 
-def load_mask_from_yolo(file_path: str, image_width: int, image_height: int) -> np.ndarray:
+def load_mask_from_yolo(
+    file_path: str, image_width: int, image_height: int
+) -> np.ndarray:
     """
     Load a segmentation mask from a YOLO annotation file.
 
@@ -220,13 +230,13 @@ def load_mask_from_yolo(file_path: str, image_width: int, image_height: int) -> 
     try:
         # Create empty mask
         mask = np.zeros((image_height, image_width), dtype=np.uint8)
-        
+
         # Read YOLO annotations
-        with open(file_path, 'r') as f:
+        with open(file_path, "r") as f:
             lines = f.readlines()
-        
+
         instance_id = 1  # Start with 1 (0 is background)
-        
+
         for line in lines:
             parts = line.strip().split()
             if len(parts) == 5:  # class_id, center_x, center_y, width, height
@@ -235,36 +245,36 @@ def load_mask_from_yolo(file_path: str, image_width: int, image_height: int) -> 
                 center_y = float(parts[2]) * image_height
                 bbox_width = float(parts[3]) * image_width
                 bbox_height = float(parts[4]) * image_height
-                
+
                 # Calculate box coordinates
                 x_min = int(center_x - bbox_width / 2)
                 y_min = int(center_y - bbox_height / 2)
                 x_max = int(center_x + bbox_width / 2)
                 y_max = int(center_y + bbox_height / 2)
-                
+
                 # Ensure coordinates are within image bounds
                 x_min = max(0, x_min)
                 y_min = max(0, y_min)
                 x_max = min(image_width - 1, x_max)
                 y_max = min(image_height - 1, y_max)
-                
+
                 # Fill rectangle with instance ID
                 mask[y_min:y_max, x_min:x_max] = instance_id
                 instance_id += 1
-        
+
         return mask
-    
+
     except Exception as e:
         raise ValueError(f"Failed to load mask from YOLO file: {e}")
 
 
 def export_mask_to_coco(
-    mask: np.ndarray, 
-    output_path: str, 
+    mask: np.ndarray,
+    output_path: str,
     image_path: Optional[str] = None,
     image_id: int = 1,
     dataset_name: str = "CellSegKit Export",
-    silent: bool = False
+    silent: bool = False,
 ) -> bool:
     """
     Export a segmentation mask to COCO JSON format.
@@ -282,7 +292,7 @@ def export_mask_to_coco(
     """
     try:
         height, width = mask.shape
-        
+
         # Create COCO structure
         coco_data = {
             "info": {
@@ -291,85 +301,79 @@ def export_mask_to_coco(
                 "version": "1.0",
                 "year": datetime.datetime.now().year,
                 "contributor": "CellSegKit",
-                "date_created": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                "date_created": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             },
-            "licenses": [
-                {
-                    "id": 1,
-                    "name": "Unknown",
-                    "url": ""
-                }
-            ],
-            "categories": [
-                {
-                    "id": 1,
-                    "name": "cell",
-                    "supercategory": "cell"
-                }
-            ],
+            "licenses": [{"id": 1, "name": "Unknown", "url": ""}],
+            "categories": [{"id": 1, "name": "cell", "supercategory": "cell"}],
             "images": [
                 {
                     "id": image_id,
                     "license": 1,
-                    "file_name": os.path.basename(image_path) if image_path else f"image_{image_id}.png",
+                    "file_name": os.path.basename(image_path)
+                    if image_path
+                    else f"image_{image_id}.png",
                     "height": height,
                     "width": width,
-                    "date_captured": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    "date_captured": datetime.datetime.now().strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    ),
                 }
             ],
-            "annotations": []
+            "annotations": [],
         }
-        
+
         # Find unique object IDs in the mask (excluding background, label 0)
         annotation_id = 1
         for obj_id in np.unique(mask):
             if obj_id == 0:
                 continue
-                
+
             # Create binary mask for this object
             binary_mask = (mask == obj_id).astype(np.uint8)
-            
+
             # Find contours
-            contours, _ = cv2.findContours(binary_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            
+            contours, _ = cv2.findContours(
+                binary_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+            )
+
             # Skip if no contours found
             if not contours:
                 continue
-                
+
             # Get area
             area = int(np.sum(binary_mask))
-            
+
             # Get bounding box
             y_indices, x_indices = np.where(binary_mask > 0)
             if len(y_indices) == 0 or len(x_indices) == 0:
                 continue
-                
+
             x_min, y_min = int(np.min(x_indices)), int(np.min(y_indices))
             x_max, y_max = int(np.max(x_indices)), int(np.max(y_indices))
             bbox_width = x_max - x_min
             bbox_height = y_max - y_min
-            
+
             # Create segmentation (polygons)
             segmentation = []
             for contour in contours:
                 # Simplify contour to reduce points
                 epsilon = 0.005 * cv2.arcLength(contour, True)
                 approx = cv2.approxPolyDP(contour, epsilon, True)
-                
+
                 if len(approx) < 3:  # Need at least 3 points for a polygon
                     continue
-                    
+
                 # Flatten polygon points to COCO format [x1,y1,x2,y2,...]
                 flattened = approx.flatten().tolist()
                 if len(flattened) % 2 != 0:  # Ensure even number of coordinates
                     flattened = flattened[:-1]
-                    
+
                 segmentation.append(flattened)
-            
+
             # Skip if no valid polygons
             if not segmentation:
                 continue
-                
+
             # Add annotation
             coco_data["annotations"].append({
                 "id": annotation_id,
@@ -378,29 +382,31 @@ def export_mask_to_coco(
                 "segmentation": segmentation,
                 "area": area,
                 "bbox": [x_min, y_min, bbox_width, bbox_height],
-                "iscrowd": 0
+                "iscrowd": 0,
             })
-            
+
             annotation_id += 1
-        
+
         # Create output directory if it doesn't exist
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        
+
         # Save COCO JSON
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(coco_data, f, indent=2)
-            
+
         if not silent:
-            print(f"✅ Mask exported to COCO format: {output_path}")
-            
+            print(f"[SUCCESS] Mask exported to COCO format: {output_path}")
+
         return True
-        
+
     except Exception as e:
-        print(f"❌ Failed to export mask to COCO format: {e}")
+        print(f"[ERROR] Failed to export mask to COCO format: {e}")
         return False
 
 
-def combine_coco_files(input_files: List[str], output_path: str, silent: bool = False) -> bool:
+def combine_coco_files(
+    input_files: List[str], output_path: str, silent: bool = False
+) -> bool:
     """
     Combine multiple COCO JSON files into a single file.
 
@@ -421,82 +427,70 @@ def combine_coco_files(input_files: List[str], output_path: str, silent: bool = 
                 "version": "1.0",
                 "year": datetime.datetime.now().year,
                 "contributor": "CellSegKit",
-                "date_created": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                "date_created": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             },
-            "licenses": [
-                {
-                    "id": 1,
-                    "name": "Unknown",
-                    "url": ""
-                }
-            ],
-            "categories": [
-                {
-                    "id": 1,
-                    "name": "cell",
-                    "supercategory": "cell"
-                }
-            ],
+            "licenses": [{"id": 1, "name": "Unknown", "url": ""}],
+            "categories": [{"id": 1, "name": "cell", "supercategory": "cell"}],
             "images": [],
-            "annotations": []
+            "annotations": [],
         }
-        
+
         # Track highest IDs to avoid duplicates
         max_image_id = 0
         max_annotation_id = 0
-        
+
         # Process each input file
         for file_path in input_files:
             if not os.path.exists(file_path):
-                print(f"⚠️ Warning: COCO file not found, skipping: {file_path}")
+                print(f"[WARNING] Warning: COCO file not found, skipping: {file_path}")
                 continue
-                
+
             try:
-                with open(file_path, 'r') as f:
+                with open(file_path, "r") as f:
                     coco_data = json.load(f)
-                    
+
                 # Update image IDs and add to combined file
                 for image in coco_data.get("images", []):
                     old_image_id = image["id"]
                     new_image_id = max_image_id + 1
-                    
+
                     # Update image ID
                     image["id"] = new_image_id
                     combined_coco["images"].append(image)
-                    
+
                     # Update annotation image IDs
                     for annotation in coco_data.get("annotations", []):
                         if annotation["image_id"] == old_image_id:
                             # Update image reference
                             annotation["image_id"] = new_image_id
-                            
+
                             # Update annotation ID
                             annotation["id"] = max_annotation_id + 1
                             max_annotation_id += 1
-                            
+
                             # Add to combined file
                             combined_coco["annotations"].append(annotation)
-                    
+
                     max_image_id = new_image_id
-                    
+
             except Exception as e:
-                print(f"⚠️ Warning: Failed to process COCO file {file_path}: {e}")
+                print(f"[WARNING] Warning: Failed to process COCO file {file_path}: {e}")
                 continue
-        
+
         # Create output directory if it doesn't exist
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        
+
         # Save combined COCO JSON
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(combined_coco, f, indent=2)
-            
+
         if not silent:
-            print(f"✅ Combined {len(input_files)} COCO files into: {output_path}")
-            
+            print(f"[SUCCESS] Combined {len(input_files)} COCO files into: {output_path}")
+
         return True
-        
+
     except Exception as e:
-        print(f"❌ Failed to combine COCO files: {e}")
+        print(f"[ERROR] Failed to combine COCO files: {e}")
         return False
 
 
@@ -515,68 +509,77 @@ def split_coco_file(input_file: str, output_dir: str, silent: bool = False) -> b
     try:
         if not os.path.exists(input_file):
             raise FileNotFoundError(f"COCO file not found: {input_file}")
-            
+
         # Create output directory if it doesn't exist
         os.makedirs(output_dir, exist_ok=True)
-        
+
         # Load input COCO file
-        with open(input_file, 'r') as f:
+        with open(input_file, "r") as f:
             coco_data = json.load(f)
-            
+
         # Check if we have images
-        if 'images' not in coco_data or not coco_data['images']:
+        if "images" not in coco_data or not coco_data["images"]:
             raise ValueError("No images found in COCO file")
-            
+
         # If only one image, just copy the file
-        if len(coco_data['images']) == 1:
-            output_path = os.path.join(output_dir, f"image_{coco_data['images'][0]['id']}.json")
+        if len(coco_data["images"]) == 1:
+            output_path = os.path.join(
+                output_dir, f"image_{coco_data['images'][0]['id']}.json"
+            )
             shutil.copy(input_file, output_path)
-            
+
             if not silent:
-                print(f"✅ COCO file contains only one image, copied to: {output_path}")
-                
+                print(f"[SUCCESS] COCO file contains only one image, copied to: {output_path}")
+
             return True
-            
+
         # Process each image
-        for image in coco_data['images']:
-            image_id = image['id']
-            
+        for image in coco_data["images"]:
+            image_id = image["id"]
+
             # Create new COCO structure for this image
             single_coco = {
-                "info": coco_data.get("info", {
-                    "description": "CellSegKit Export",
-                    "date_created": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                }),
+                "info": coco_data.get(
+                    "info",
+                    {
+                        "description": "CellSegKit Export",
+                        "date_created": datetime.datetime.now().strftime(
+                            "%Y-%m-%d %H:%M:%S"
+                        ),
+                    },
+                ),
                 "licenses": coco_data.get("licenses", []),
                 "categories": coco_data.get("categories", []),
                 "images": [image],
-                "annotations": []
+                "annotations": [],
             }
-            
+
             # Find annotations for this image
             for annotation in coco_data.get("annotations", []):
                 if annotation.get("image_id") == image_id:
                     single_coco["annotations"].append(annotation)
-            
+
             # Generate output filename
             file_name = image.get("file_name", f"image_{image_id}")
             base_name = os.path.splitext(file_name)[0]
             output_path = os.path.join(output_dir, f"{base_name}.json")
-            
+
             # Save single image COCO file
-            with open(output_path, 'w') as f:
+            with open(output_path, "w") as f:
                 json.dump(single_coco, f, indent=2)
-                
+
             if not silent:
-                print(f"✅ Extracted image {image_id} to: {output_path}")
-        
+                print(f"[SUCCESS] Extracted image {image_id} to: {output_path}")
+
         if not silent:
-            print(f"✅ Split COCO file into {len(coco_data['images'])} separate files in: {output_dir}")
-            
+            print(
+                f"[SUCCESS] Split COCO file into {len(coco_data['images'])} separate files in: {output_dir}"
+            )
+
         return True
-        
+
     except Exception as e:
-        print(f"❌ Failed to split COCO file: {e}")
+        print(f"[ERROR] Failed to split COCO file: {e}")
         return False
 
 
@@ -587,7 +590,7 @@ def convert_mask_format(
     original_image_path: Optional[str] = None,
     class_id: int = 0,
     image_id: Optional[int] = None,
-    dataset_name: str = "CellSegKit Export"
+    dataset_name: str = "CellSegKit Export",
 ) -> None:
     """
     Convert a mask file from one format to another.
@@ -650,18 +653,24 @@ def convert_mask_format(
         elif mask_path.lower().endswith(".json"):
             # COCO format
             if not image_id and not original_image_path:
-                raise ValueError("For COCO input, either image_id or original_image_path must be provided")
+                raise ValueError(
+                    "For COCO input, either image_id or original_image_path must be provided"
+                )
             mask = load_mask_from_coco(mask_path, image_id, original_image_path)
         elif mask_path.lower().endswith(".txt"):
             # YOLO format
             if not original_image_path:
-                raise ValueError("Original image path is required for YOLO input format")
+                raise ValueError(
+                    "Original image path is required for YOLO input format"
+                )
             # Load original image to get dimensions
             original_image = _load_original_image(original_image_path)
             image_height, image_width = original_image.shape[:2]
             mask = load_mask_from_yolo(mask_path, image_width, image_height)
         else:
-            raise ValueError(f"Unsupported mask file format: {os.path.splitext(mask_path)[1]}. Supported formats are .npy, .png, .json (COCO), and .txt (YOLO)")
+            raise ValueError(
+                f"Unsupported mask file format: {os.path.splitext(mask_path)[1]}. Supported formats are .npy, .png, .json (COCO), and .txt (YOLO)"
+            )
 
         pbar.update(1)
 
@@ -675,25 +684,27 @@ def convert_mask_format(
             success = save_mask_as_png(mask, output_path, silent=True)
         elif output_format == "yolo":
             # Load original image to get dimensions if not already loaded
-            if 'original_image' not in locals():
+            if "original_image" not in locals():
                 original_image = _load_original_image(original_image_path)
             image_height, image_width = original_image.shape[:2]
-            success = export_yolo_annotations(mask, output_path, (image_width, image_height), class_id, silent=True)
+            success = export_yolo_annotations(
+                mask, output_path, (image_width, image_height), class_id, silent=True
+            )
         elif output_format == "coco":
             success = export_mask_to_coco(
-                mask, 
-                output_path, 
-                original_image_path, 
+                mask,
+                output_path,
+                original_image_path,
                 image_id if image_id is not None else 1,
                 dataset_name,
-                silent=True
+                silent=True,
             )
             success = export_yolo_annotations(
                 mask, output_path, (image_width, image_height), class_id, silent=True
             )
         elif output_format == "overlay":
             # Load original image if not already loaded
-            if 'original_image' not in locals():
+            if "original_image" not in locals():
                 original_image = _load_original_image(original_image_path)
 
             # Convert BGR to RGB (OpenCV loads as BGR)
@@ -715,11 +726,11 @@ def convert_mask_format(
 
     if success:
         print(
-            f"\n\n\n\n\n✅ Task completed! Converted {os.path.basename(mask_path)} to {output_format} format: {os.path.basename(output_path)}"
+            f"\n\n\n\n\n[SUCCESS] Task completed! Converted {os.path.basename(mask_path)} to {output_format} format: {os.path.basename(output_path)}"
         )
     else:
         print(
-            f"\n\n\n\n\n❌ Error converting {os.path.basename(mask_path)} to {output_format} format:"
+            f"\n\n\n\n\n[ERROR] Error converting {os.path.basename(mask_path)} to {output_format} format:"
         )
         if error_message:
             print(f"  - {error_message}")

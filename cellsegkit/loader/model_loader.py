@@ -72,6 +72,21 @@ class BaseSegmenter(ABC):
         """
         pass
 
+    def load_image(self, file_path):
+        pass
+
+    def batch_segment(self, image_paths):
+        results = {}
+        for image_path in image_paths:
+            try:
+                image = self.load_image(image_path)
+                mask = self.segment(image)
+                results[image_path] = mask
+            except Exception as e:
+                print(f"Error processing image {image_path}: {str(e)}")
+        
+        return results
+
 
 class SegmenterFactory:
     """Factory class for creating segmentation model instances."""

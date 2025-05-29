@@ -141,19 +141,19 @@ def run_segmentation(
 
         except Exception as e:
             error_files.append((os.path.basename(image_path), str(e)))
-            pbar.write(f"❌ Error processing {os.path.basename(image_path)}: {e}")
+            pbar.write(f"[ERROR] Error processing {os.path.basename(image_path)}: {e}")
 
     pbar.close()
 
     # Print summary - add a newline to move to the next line after the progress bar
-    print(f"\n\n✅ Task completed! Processed {total_images} images.")
+    print(f"\n\n[SUCCESS] Task completed! Processed {total_images} images.")
 
     if error_files:
-        print(f"\n❌ Errors occurred in {len(error_files)} files:")
+        print(f"\n[ERROR] Errors occurred in {len(error_files)} files:")
         for file_info in error_files:
             if isinstance(file_info[1], str):
                 print(f"  - {file_info[0]}: {file_info[1]}")
             else:
                 print(f"  - {file_info[0]}: Failed formats: {', '.join(file_info[1])}")
     else:
-        print("\n✅ No errors occurred during processing.")
+        print("\n[SUCCESS] No errors occurred during processing.")

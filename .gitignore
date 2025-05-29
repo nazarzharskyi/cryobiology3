@@ -179,7 +179,8 @@ __pycache__/
 *.ipynb_checkpoints
 .DS_Store
 
-dataset
-output
+dataset/
+output/
+sample/
 /test.py
 /test_utils.py

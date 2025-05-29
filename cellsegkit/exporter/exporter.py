@@ -30,10 +30,10 @@ def save_mask_as_npy(mask: np.ndarray, output_path: str, silent: bool = False) -
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         np.save(output_path, mask)
         if not silent:
-            print(f"✅ Mask saved as .npy: {output_path}")
+            print(f"[SUCCESS] Mask saved as .npy: {output_path}")
         return True
     except Exception as e:
-        print(f"❌ Failed to save mask as .npy: {e}")
+        print(f"[ERROR] Failed to save mask as .npy: {e}")
         return False
 
 
@@ -54,10 +54,10 @@ def save_mask_as_png(mask: np.ndarray, output_path: str, silent: bool = False) -
         mask_img = Image.fromarray(mask.astype(np.uint8), mode="P")  # Indexed PNG
         mask_img.save(output_path)
         if not silent:
-            print(f"✅ Mask saved as PNG: {output_path}")
+            print(f"[SUCCESS] Mask saved as PNG: {output_path}")
         return True
     except Exception as e:
-        print(f"❌ Failed to save mask as PNG: {e}")
+        print(f"[ERROR] Failed to save mask as PNG: {e}")
         return False
 
 
@@ -112,10 +112,10 @@ def export_yolo_annotations(
             f.write("\n".join(annotations))
 
         if not silent:
-            print(f"✅ Annotations saved to {output_txt_path}")
+            print(f"[SUCCESS] Annotations saved to {output_txt_path}")
         return True
     except Exception as e:
-        print(f"❌ Failed to export YOLO annotations: {e}")
+        print(f"[ERROR] Failed to export YOLO annotations: {e}")
         return False
 
 
@@ -156,8 +156,8 @@ def draw_overlay(
         plt.close()
 
         if not silent:
-            print(f"✅ Overlay saved: {output_path}")
+            print(f"[SUCCESS] Overlay saved: {output_path}")
         return True
     except Exception as e:
-        print(f"❌ Failed to save overlay: {e}")
+        print(f"[ERROR] Failed to save overlay: {e}")
         return False
