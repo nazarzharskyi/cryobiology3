@@ -251,46 +251,6 @@ get_device(prefer_gpu: bool = True)
 
 Returns the appropriate device (CUDA or CPU) based on availability and preference.
 
-## Docker
-
-### Building the Docker Image
-
-```bash
-# Build the Docker image
-docker build -t cellsegkit .
-```
-
-### Running the Container
-
-```bash
-# Run with basic options
-docker run -v /path/to/input:/input -v /path/to/output:/output cellsegkit --model cyto --input /input --output /output
-
-# Run with specific export formats
-docker run -v /path/to/input:/input -v /path/to/output:/output cellsegkit --model cyto --input /input --output /output --export overlay,npy
-```
-
-### Using docker-compose
-
-Create a `docker-compose.yml` file:
-
-```yaml
-version: '3'
-services:
-  cellsegkit:
-    build: .
-    volumes:
-      - ./dataset:/input
-      - ./results:/output
-    command: --model cyto --input /input --output /output
-```
-
-Then run:
-
-```bash
-docker-compose up
-```
-
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
