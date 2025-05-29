@@ -38,9 +38,11 @@ print("Running Cellpose segmentation on all images...")
 cellpose_results = cellpose_segmenter.batch_segment(image_paths)
 print(f"Completed Cellpose segmentation for {len(cellpose_results)} images")
 
+"""
 print("Running CellSAM segmentation on all images...")
 cellsam_results = cellsam_segmenter.batch_segment(image_paths)
 print(f"Completed CellSAM segmentation for {len(cellsam_results)} images")
+"""
 
 # Process the Cellpose results
 print("Exporting Cellpose results...")
@@ -69,6 +71,7 @@ for image_path, cellpose_mask in cellpose_results.items():
     # Create overlay visualization
     draw_overlay(cellpose_image, cellpose_mask, f"{cellpose_output_base}_overlay.png")
 
+"""
 # Process the CellSAM results
 print("Exporting CellSAM results...")
 for image_path, cellsam_mask in cellsam_results.items():
@@ -97,3 +100,4 @@ for image_path, cellsam_mask in cellsam_results.items():
     draw_overlay(cellsam_image_rgb, cellsam_mask, f"{cellsam_output_base}_overlay.png")
 
 print(f"Processing complete. All results saved to {output_dir}")
+"""

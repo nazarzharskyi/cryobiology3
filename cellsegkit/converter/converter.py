@@ -474,7 +474,9 @@ def combine_coco_files(
                     max_image_id = new_image_id
 
             except Exception as e:
-                print(f"[WARNING] Warning: Failed to process COCO file {file_path}: {e}")
+                print(
+                    f"[WARNING] Warning: Failed to process COCO file {file_path}: {e}"
+                )
                 continue
 
         # Create output directory if it doesn't exist
@@ -485,7 +487,9 @@ def combine_coco_files(
             json.dump(combined_coco, f, indent=2)
 
         if not silent:
-            print(f"[SUCCESS] Combined {len(input_files)} COCO files into: {output_path}")
+            print(
+                f"[SUCCESS] Combined {len(input_files)} COCO files into: {output_path}"
+            )
 
         return True
 
@@ -529,7 +533,9 @@ def split_coco_file(input_file: str, output_dir: str, silent: bool = False) -> b
             shutil.copy(input_file, output_path)
 
             if not silent:
-                print(f"[SUCCESS] COCO file contains only one image, copied to: {output_path}")
+                print(
+                    f"[SUCCESS] COCO file contains only one image, copied to: {output_path}"
+                )
 
             return True
 

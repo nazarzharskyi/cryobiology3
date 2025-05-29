@@ -149,7 +149,9 @@ def check_gpu_availability(verbose: bool = True) -> bool:
         if gpu_available:
             cuda_version = torch_cuda_version or cuda_version_from_smi or "Unknown"
             devices_str = ", ".join(device_names) if device_names else "Unknown GPU"
-            logger.info(f"[SUCCESS] GPU found, using CUDA {cuda_version} with {devices_str}")
+            logger.info(
+                f"[SUCCESS] GPU found, using CUDA {cuda_version} with {devices_str}"
+            )
         else:
             logger.warning(
                 "[WARNING] No compatible GPU detected—falling back to CPU. "

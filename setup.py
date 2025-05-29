@@ -54,6 +54,7 @@ setup(
         "torch>=1.7.0",
         "torchvision>=0.8.0",
         "psutil>=5.9.0",
+        "tqdm>=4.60.0",
     ],
     extras_require={
         "cellsam": [

@@ -14,7 +14,7 @@ from cellsegkit.utils.gpu_utils import get_device, check_gpu_availability
 
 # Try to import cellSAM, but don't fail if it's not installed
 try:
-    from cellSAM import segment_cellular_image
+    from cellpose import segment_cellular_image
 
     CELLSAM_AVAILABLE = True
 except ImportError:
@@ -84,7 +84,7 @@ class BaseSegmenter(ABC):
                 results[image_path] = mask
             except Exception as e:
                 print(f"Error processing image {image_path}: {str(e)}")
-        
+
         return results
 
 
